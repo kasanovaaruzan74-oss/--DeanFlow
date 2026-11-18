@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title description">
+  <title id="title">DeanFlow ақпараттық жүйесінің ER диаграммасы</title>
+  <desc id="description">Он бір кесте мен олардың алғашқы және сыртқы кілттерін, бірден көпке байланыстарын көрсететін диаграмма.</desc>
+  <defs>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#182a3d" flood-opacity=".10"/></filter>
+    <style>
+      .bg{fill:#f5f7fa}.title{font:700 34px 'Segoe UI',Arial,sans-serif;fill:#172b43}.legend{font:18px 'Segoe UI',Arial,sans-serif;fill:#4e6072}.card{fill:#fff;stroke:#b7c3d0;stroke-width:1.5;filter:url(#shadow)}.card-head{fill:#edf2f6}.head{font:700 21px 'Segoe UI',Arial,sans-serif;fill:#16283c}.table{font:600 15px 'Segoe UI',Arial,sans-serif;fill:#627487}.field{font:16px 'Segoe UI',Arial,sans-serif;fill:#25374a}.divider{stroke:#c6d0da;stroke-width:1}.edge{fill:none;stroke:#65788c;stroke-width:2}.cardinality{font:700 17px 'Segoe UI',Arial,sans-serif;fill:#233c56}.hint{font:14px 'Segoe UI',Arial,sans-serif;fill:#607184}
+    </style>
+    <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6"><circle cx="5" cy="5" r="3" fill="#65788c"/></marker>
+  </defs>
+  <rect class="bg" width="1800" height="1200"/>
+  <text class="title" x="900" y="54" text-anchor="middle">DeanFlow ақпараттық жүйесінің ER диаграммасы</text>
+  <text class="legend" x="900" y="91" text-anchor="middle">PK — бастапқы кілт · FK — сыртқы кілт · 1 → 0..N — бір жазбаға бірнеше жазба байланысады</text>
+
+  <!-- Байланыстар кестелердің артында көрсетіледі. -->
+  <g class="edge" marker-start="url(#dot)" marker-end="url(#dot)">
+    <path d="M340 260 H400 V475 H440"/><path d="M550 340 V455"/>
+    <path d="M700 255 H790 V470 H850"/><path d="M1060 340 V430"/>
+    <path d="M1280 340 V395 H1320 V430"/><path d="M640 555 H850"/>
+    <path d="M900 750 V815 H190 V850"/><path d="M1040 750 V815 H540 V850"/>
+    <path d="M1160 750 V850"/><path d="M1270 750 V815 H1240 V850"/>
+    <path d="M1350 700 H1600 V815 H1590 V850"/>
+  </g>
+  <g class="cardinality">
+    <text x="350" y="246">1</text><text x="406" y="440">0..N</text>
+    <text x="559" y="361">1</text><text x="559" y="449">0..N</text>
+    <text x="710" y="246">1</text><text x="798" y="462">0..N</text>
+    <text x="1068" y="363">1</text><text x="1068" y="425">0..N</text>
+    <text x="1288" y="363">1</text><text x="1328" y="425">0..N</text>
+    <text x="650" y="546">1</text><text x="818" y="546">0..N</text>
+    <text x="910" y="779">1</text><text x="202" y="843">0..N</text>
+    <text x="1050" y="779">1</text><text x="552" y="843">0..N</text>
+    <text x="1170" y="779">1</text><text x="1170" y="843">0..N</text>
+    <text x="1280" y="779">1</text><text x="1252" y="843">0..N</text>
+    <text x="1360" y="692">1</text><text x="1602" y="843">0..N</text>
+  </g>
+
+  <g transform="translate(40 180)">
+    <rect class="card" width="300" height="160" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Рөлдер</text><text class="table" x="22" y="57">roles</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK role_id</text><text class="field" x="22" y="126">role_name UNIQUE</text><text class="field" x="22" y="149">description</text>
+  </g>
+  <g transform="translate(400 180)">
+    <rect class="card" width="300" height="160" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Бөлімдер</text><text class="table" x="22" y="57">departments</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK department_id</text><text class="field" x="22" y="126">department_name UNIQUE</text><text class="field" x="22" y="149">short_name · is_active</text>
+  </g>
+  <g transform="translate(760 180)">
+    <rect class="card" width="300" height="160" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Құжат түрлері</text><text class="table" x="22" y="57">document_types</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK document_type_id</text><text class="field" x="22" y="126">type_name</text><text class="field" x="22" y="149">code UNIQUE · is_active</text>
+  </g>
+  <g transform="translate(1120 180)">
+    <rect class="card" width="300" height="160" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Құжат мәртебелері</text><text class="table" x="22" y="57">document_statuses</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK status_id</text><text class="field" x="22" y="126">status_name</text><text class="field" x="22" y="149">status_code UNIQUE</text>
+  </g>
+  <g transform="translate(260 455)">
+    <rect class="card" width="380" height="215" rx="14"/><path class="card-head" d="M14 0h352a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Пайдаланушылар</text><text class="table" x="22" y="57">users</text><line class="divider" x1="18" y1="76" x2="362" y2="76"/>
+    <text class="field" x="22" y="103">PK user_id</text><text class="field" x="22" y="126">FK role_id · FK department_id</text><text class="field" x="22" y="149">full_name · email UNIQUE</text><text class="field" x="22" y="172">is_active · created_at</text>
+  </g>
+  <g transform="translate(850 430)">
+    <rect class="card" width="520" height="320" rx="14"/><path class="card-head" d="M14 0h492a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Құжаттар</text><text class="table" x="22" y="57">documents</text><line class="divider" x1="18" y1="76" x2="502" y2="76"/>
+    <text class="field" x="22" y="103">PK document_id · registration_number UNIQUE</text><text class="field" x="22" y="126">FK document_type_id · FK status_id</text><text class="field" x="22" y="149">FK department_id · FK created_by_user_id</text><text class="field" x="22" y="172">title · description · direction · priority</text><text class="field" x="22" y="195">registered_at · due_date · completed_at</text><text class="field" x="22" y="218">is_archived</text>
+  </g>
+  <g transform="translate(40 850)">
+    <rect class="card" width="300" height="220" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Орындаушылар</text><text class="table" x="22" y="57">document_executors</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK assignment_id</text><text class="field" x="22" y="126">FK document_id · FK user_id</text><text class="field" x="22" y="149">FK assigned_by_user_id</text><text class="field" x="22" y="172">due_date · completed_at</text>
+  </g>
+  <g transform="translate(390 850)">
+    <rect class="card" width="300" height="220" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Келісімдер</text><text class="table" x="22" y="57">document_approvals</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK approval_id</text><text class="field" x="22" y="126">FK document_id</text><text class="field" x="22" y="149">FK approver_user_id</text><text class="field" x="22" y="172">approval_order · approval_status</text><text class="field" x="22" y="195">assigned_at · decision_at</text>
+  </g>
+  <g transform="translate(740 850)">
+    <rect class="card" width="300" height="220" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Құжат тарихы</text><text class="table" x="22" y="57">document_history</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK history_id</text><text class="field" x="22" y="126">FK document_id</text><text class="field" x="22" y="149">FK user_id</text><text class="field" x="22" y="172">action_type · description</text><text class="field" x="22" y="195">action_date</text>
+  </g>
+  <g transform="translate(1090 850)">
+    <rect class="card" width="300" height="220" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Пікірлер</text><text class="table" x="22" y="57">document_comments</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK comment_id</text><text class="field" x="22" y="126">FK document_id</text><text class="field" x="22" y="149">FK user_id</text><text class="field" x="22" y="172">comment_text</text><text class="field" x="22" y="195">created_at</text>
+  </g>
+  <g transform="translate(1440 850)">
+    <rect class="card" width="300" height="220" rx="14"/><path class="card-head" d="M14 0h272a14 14 0 0 1 14 14v60H0V14A14 14 0 0 1 14 0"/>
+    <text class="head" x="22" y="32">Тіркемелер</text><text class="table" x="22" y="57">attachments</text><line class="divider" x1="18" y1="76" x2="282" y2="76"/>
+    <text class="field" x="22" y="103">PK attachment_id</text><text class="field" x="22" y="126">FK document_id</text><text class="field" x="22" y="149">FK uploaded_by_user_id</text><text class="field" x="22" y="172">file_name · file_type</text><text class="field" x="22" y="195">file_size · uploaded_at</text>
+  </g>
+
+  <text class="hint" x="900" y="1130" text-anchor="middle">Негізгі жүйедегі кестелер: Data/Entities.cs және Data/DeanFlowDbContext.cs · Демо нұсқада password_hash пен сақтау жолдары қауіпсіздік үшін көрсетілмеген</text>
+</svg>

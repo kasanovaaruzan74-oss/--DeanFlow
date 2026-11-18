@@ -1,0 +1,26 @@
+@model IReadOnlyList<DeanDocument>
+@{
+    var range = (string)(ViewBag.Range ?? "week");
+    ViewData["Title"] = "Мерзімдер орталығы";
+}
+<div class="page-toolbar"><div><h2>Мерзімдер орталығы</h2><p>Жақын мерзімдер мен кешіктірілген құжаттар</p></div></div>
+<div class="stats-grid">
+    @foreach (var item in new[] { ("today", "Бүгін", "#3458d4"), ("tomorrow", "Ертең", "#bc7a1b"), ("three", "3 күн ішінде", "#d59439"), ("week", "Осы апта", "#188a69"), ("overdue", "Мерзімі өткен", "#cf5555"), ("completed", "Аяқталған", "#188a69") })
+    {
+        <a asp-action="Index" asp-route-range="@item.Item1" class="stat-card" style="border-left:3px solid @item.Item3"><div class="stat-top"><span>@item.Item2</span><span class="stat-icon">◷</span></div><div class="stat-value" style="font-size:17px;color:@item.Item3">@(item.Item1 == range ? Model.Count.ToString() : "↗")</div><div class="stat-foot">@(item.Item1 == range ? "Таңдалған тізім" : "Тізімді ашу")</div></a>
+    }
+</div>
+<section class="table-panel">
+    <div class="panel-head"><div><h3>@(range switch { "today" => "Бүгінгі мерзімдер", "tomorrow" => "Ертеңгі мерзімдер", "three" => "Келесі үш күн", "overdue" => "Мерзімі өткен құжаттар", "completed" => "Аяқталған құжаттар", _ => "Алдағы апта" })</h3><p>Тізім дерекқордағы мерзімге сай беріледі</p></div></div>
+    @if (Model.Count == 0) { <div class="empty-state"><div class="empty-icon">◷</div><strong>Көрсететін құжат жоқ</strong><p>Осы уақыт аралығында мерзімі бар құжат табылмады.</p></div> }
+    else { <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Құжат</th><th>Мәртебе</th><th>Бөлім</th><th>Орындаушы</th><th>Мерзім</th><th>Қалған уақыт</th></tr></thead><tbody>
+        @foreach (var doc in Model)
+        {
+            var late = doc.CompletedAt is null && doc.DueDate!.Value.Date < DateTime.Today;
+            var days = (doc.DueDate!.Value.Date - DateTime.Today).Days;
+            var executor = doc.Executors.FirstOrDefault(x => x.IsPrimary)?.User ?? doc.Executors.FirstOrDefault()?.User;
+            <tr><td><a asp-controller="Documents" asp-action="Details" asp-route-id="@doc.DocumentId" class="doc-number">@doc.RegistrationNumber</a><div class="doc-title">@doc.Title</div></td><td>@doc.Status?.StatusName</td><td>@(doc.Department?.ShortName ?? "—")</td><td>@(executor?.FullName ?? "Тағайындалмаған")</td><td>@doc.DueDate?.ToString("dd.MM.yyyy")</td><td><span class="status-badge @(doc.CompletedAt.HasValue ? "is-complete" : late ? "is-danger" : days <= 1 ? "is-pending" : "is-progress")">@(doc.CompletedAt.HasValue ? "Аяқталған" : late ? $"{Math.Abs(days)} күн кешікті" : days == 0 ? "Бүгін" : $"{days} күн қалды")</span></td></tr>
+        }
+    </tbody></table></div> }
+    <div class="table-foot"><span>@Model.Count құжат</span><span>Күн бойынша топтастырылған бақылау</span></div>
+</section>

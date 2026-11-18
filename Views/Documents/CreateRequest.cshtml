@@ -1,0 +1,5 @@
+@model DocumentFormInput
+@{ ViewData["Title"] = "Жаңа өтініш"; }
+<div class="page-toolbar"><div><h2>Өтініш беру</h2><p>Өтініш деректерін толтырыңыз. Құжат күйін кейін осы жерден бақылайсыз.</p></div><a asp-action="My" class="btn btn-outline-primary">← Өтініштерім</a></div>
+<div class="db-warning">Қауіпсіздік үшін студент тіркеген өтініштерді тек сол студенттің өзі ғана қарай алады. Дерекқорда бөлек иеленуші өрісі жоқ болғандықтан, қолданыстағы сұлбада құжатты студент тіркеушісі ретінде белгілеу қолданылады.</div>
+<section class="panel"><div class="panel-body"><partial name="_DocumentForm" model="Model" /></div></section>

@@ -1,0 +1,256 @@
+@model DashboardViewModel
+@{
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    var isStudent = role == AppRoles.Student;
+    var isAdmin = role == AppRoles.Administrator;
+    var isDeanery = role == AppRoles.DeanerySpecialist;
+    var isExecutor = role == AppRoles.Executor;
+    var isManager = role is AppRoles.Administrator or AppRoles.DeanerySpecialist or AppRoles.Management;
+    var canApprove = role is AppRoles.Administrator or AppRoles.Management;
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("kk-KZ");
+    var greeting = DateTime.Now.Hour < 12 ? "Қайырлы таң" : DateTime.Now.Hour < 18 ? "Қайырлы күн" : "Қайырлы кеш";
+    var weekDays = new[] { "Дс", "Сс", "Ср", "Бс", "Жм", "Сн", "Жс" };
+    var statusColors = new[] { "#5945A5", "#5575B8", "#23947A", "#D09235", "#BE5868" };
+    var maxMonthly = Math.Max(1, Model.MonthlySummary.Count == 0 ? 1 : Model.MonthlySummary.Max(x => x.Count));
+    string StageClass(DocumentStatus? status) => WorkflowService.Stage(status) switch
+    {
+        "completed" or "archived" => "is-complete",
+        "inprogress" or "assigned" => "is-progress",
+        "approval" or "review" or "registered" => "is-pending",
+        "overdue" or "rejected" or "returned" => "is-danger",
+        _ => "is-neutral"
+    };
+}
+
+<section class="dashboard-welcome">
+    <div class="dashboard-welcome-copy">
+        <div class="dashboard-date"><span class="date-indicator"></span>@DateTime.Now.ToString("dddd, d MMMM yyyy", culture)</div>
+        <h2>@greeting, @Model.GreetingName</h2>
+        <p>Құжаттар мен жұмыс барысын бір жерден бақылаңыз.</p>
+    </div>
+    <div class="dashboard-welcome-action">
+        @if (isStudent)
+        {
+            <a asp-controller="Documents" asp-action="CreateRequest" class="btn btn-primary"><svg><use href="#i-plus" /></svg>Өтініш жіберу</a>
+        }
+        else if (isAdmin || isDeanery)
+        {
+            <a asp-controller="Documents" asp-action="Create" class="btn btn-primary"><svg><use href="#i-plus" /></svg>Құжат тіркеу</a>
+        }
+        else if (isExecutor)
+        {
+            <a asp-controller="Tasks" asp-action="Index" class="btn btn-primary"><svg><use href="#i-check" /></svg>Тапсырмаларым</a>
+        }
+        else
+        {
+            <a asp-controller="Documents" asp-action="Index" class="btn btn-primary"><svg><use href="#i-files" /></svg>Құжаттарды ашу</a>
+        }
+        <a asp-controller="Home" asp-action="SiteMap" class="dashboard-map-link"><svg><use href="#i-folder" /></svg>Сайт картасы</a>
+    </div>
+</section>
+
+@if (!Model.DatabaseAvailable)
+{
+    <div class="database-notice" role="status"><strong>Дерекқор қолжетімсіз</strong><span>@Model.DatabaseMessage</span></div>
+}
+
+<nav class="dashboard-shortcuts" aria-label="Жылдам сілтемелер">
+    @if (isStudent)
+    {
+        <a class="shortcut-card" asp-controller="Documents" asp-action="CreateRequest"><span class="shortcut-icon"><svg><use href="#i-plus" /></svg></span><span><strong>Өтініш жіберу</strong><small>Жаңа өтініш жасау</small></span><span class="shortcut-arrow">→</span></a>
+        <a class="shortcut-card" asp-controller="Documents" asp-action="My"><span class="shortcut-icon"><svg><use href="#i-files" /></svg></span><span><strong>Менің өтініштерім</strong><small>Өтініштер мәртебесі</small></span><span class="shortcut-arrow">→</span></a>
+    }
+    else
+    {
+        @if (isAdmin || isDeanery)
+        {
+            <a class="shortcut-card" asp-controller="Documents" asp-action="Create"><span class="shortcut-icon"><svg><use href="#i-plus" /></svg></span><span><strong>Құжат тіркеу</strong><small>Жаңа құжат ашу</small></span><span class="shortcut-arrow">→</span></a>
+        }
+        <a class="shortcut-card" asp-controller="Documents" asp-action="Index"><span class="shortcut-icon"><svg><use href="#i-files" /></svg></span><span><strong>Құжаттар</strong><small>Қолжетімді тізім</small></span><span class="shortcut-arrow">→</span></a>
+        @if (isAdmin || isDeanery || isExecutor)
+        {
+            <a class="shortcut-card" asp-controller="Tasks" asp-action="Index"><span class="shortcut-icon"><svg><use href="#i-check" /></svg></span><span><strong>@(isExecutor ? "Менің тапсырмаларым" : "Тапсырмалар")</strong><small>@(isExecutor ? $"{Model.MyTasks} белсенді" : "Орындау барысы")</small></span><span class="shortcut-arrow">→</span></a>
+        }
+        @if (canApprove)
+        {
+            <a class="shortcut-card" asp-controller="Approvals" asp-action="Index"><span class="shortcut-icon"><svg><use href="#i-check" /></svg></span><span><strong>Келісу</strong><small>@Model.PendingApprovals шешім күтуде</small></span><span class="shortcut-arrow">→</span></a>
+        }
+        @if (isManager)
+        {
+            <a class="shortcut-card" asp-controller="Deadlines" asp-action="Index"><span class="shortcut-icon"><svg><use href="#i-clock" /></svg></span><span><strong>Мерзімдер</strong><small>@Model.Overdue мерзімі өткен</small></span><span class="shortcut-arrow">→</span></a>
+        }
+    }
+</nav>
+
+<section class="dashboard-kpis" aria-label="Негізгі көрсеткіштер">
+    <article class="dashboard-kpi"><span class="kpi-label">Қолжетімді құжаттар</span><strong>@Model.TotalDocuments.ToString("N0")</strong><small>Жұмыс кеңістігінде</small></article>
+    <article class="dashboard-kpi"><span class="kpi-label">Бүгін тіркелген</span><strong>@Model.TodayRegistered.ToString("N0")</strong><small>Жаңа құжаттар</small></article>
+    <article class="dashboard-kpi"><span class="kpi-label">Орындалу үстінде</span><strong>@Model.InProgress.ToString("N0")</strong><small>Белсенді үдеріс</small></article>
+    <article class="dashboard-kpi"><span class="kpi-label">Аяқталған</span><strong>@Model.Completed.ToString("N0")</strong><small>Жұмыс аяқталды</small></article>
+    @if (canApprove)
+    {
+        <article class="dashboard-kpi"><span class="kpi-label">Келісу кезегінде</span><strong>@Model.PendingApprovals.ToString("N0")</strong><small>Шешім қажет</small></article>
+    }
+    else if (isExecutor)
+    {
+        <article class="dashboard-kpi"><span class="kpi-label">Менің тапсырмаларым</span><strong>@Model.MyTasks.ToString("N0")</strong><small>Белсенді тапсырма</small></article>
+    }
+    <article class="dashboard-kpi kpi-overdue"><span class="kpi-label">Мерзімі өткен</span><strong>@Model.Overdue.ToString("N0")</strong><small>Назар аударуды қажет етеді</small></article>
+</section>
+
+<section class="dashboard-main-grid">
+    <section class="panel calendar-panel" aria-labelledby="calendarTitle">
+        <div class="panel-head calendar-heading">
+            <div><span class="panel-kicker">ЖОСПАР</span><h3 id="calendarTitle">Құжат күнтізбесі</h3><p>Құжаттар мен тапсырмалардың нақты мерзімдері</p></div>
+            <div class="calendar-month-switch">
+                <a asp-controller="Home" asp-action="Index" asp-route-year="@(Model.CalendarMonth.AddMonths(-1).Year)" asp-route-month="@(Model.CalendarMonth.AddMonths(-1).Month)" aria-label="Алдыңғы ай">‹</a>
+                <strong>@Model.CalendarMonth.ToString("MMMM yyyy", culture)</strong>
+                <a asp-controller="Home" asp-action="Index" asp-route-year="@(Model.CalendarMonth.AddMonths(1).Year)" asp-route-month="@(Model.CalendarMonth.AddMonths(1).Month)" aria-label="Келесі ай">›</a>
+                @if (Model.CalendarMonth.Year != DateTime.Today.Year || Model.CalendarMonth.Month != DateTime.Today.Month)
+                {
+                    <a class="calendar-today-link" asp-controller="Home" asp-action="Index">Бүгін</a>
+                }
+            </div>
+        </div>
+        <div class="calendar-grid" role="grid" aria-label="@Model.CalendarMonth.ToString("MMMM yyyy", culture)">
+            @foreach (var weekday in weekDays)
+            {
+                <div class="calendar-weekday" role="columnheader">@weekday</div>
+            }
+            @for (var i = 0; i < 42; i++)
+            {
+                var day = Model.CalendarGridStart.AddDays(i).Date;
+                var dayEvents = Model.CalendarEvents.Where(item => item.DueDate.Date == day).ToList();
+                var cellClass = day.Month != Model.CalendarMonth.Month ? "is-outside" : "";
+                if (day == DateTime.Today) { cellClass += " is-today"; }
+                <div class="calendar-day @cellClass" role="gridcell" aria-label="@day.ToString("d MMMM", culture)">
+                    <span class="calendar-day-number">@day.Day</span>
+                    @foreach (var calendarEvent in dayEvents.Take(2))
+                    {
+                        <a class="calendar-event @(calendarEvent.Kind == "task" ? "event-task" : "event-document") @(calendarEvent.IsCompleted ? "event-complete" : "")" asp-controller="Documents" asp-action="Details" asp-route-id="@calendarEvent.DocumentId" title="@calendarEvent.RegistrationNumber · @calendarEvent.Title">
+                            <span>@(calendarEvent.Kind == "task" ? "Тапсырма" : "Құжат")</span><strong>@calendarEvent.Title</strong>
+                        </a>
+                    }
+                    @if (dayEvents.Count > 2)
+                    {
+                        <span class="calendar-overflow">+@(dayEvents.Count - 2) тағы</span>
+                    }
+                </div>
+            }
+        </div>
+        <div class="calendar-legend"><span><i class="legend-document"></i>Құжат мерзімі</span><span><i class="legend-task"></i>Менің тапсырмам</span></div>
+    </section>
+
+    <aside class="dashboard-side-column">
+        <section class="panel compact-panel" aria-labelledby="notificationsTitle">
+            <div class="panel-head"><div><span class="panel-kicker">СОҢҒЫ ЖАҢАЛЫҚТАР</span><h3 id="notificationsTitle">Хабарландырулар</h3></div><a class="panel-link" asp-controller="Notifications" asp-action="Index">Барлығы <span>→</span></a></div>
+            @if (Model.RecentNotifications.Count == 0)
+            {
+                <div class="dashboard-empty">Жаңа хабарландыру жоқ.</div>
+            }
+            else
+            {
+                <div class="dashboard-notifications">
+                    @foreach (var notification in Model.RecentNotifications)
+                    {
+                        <form asp-controller="Notifications" asp-action="MarkRead" method="post" class="dashboard-notification-form">
+                            <input type="hidden" name="id" value="@notification.NotificationId" />
+                            <button type="submit" class="dashboard-notification @(notification.IsRead ? "is-read" : "is-unread")">
+                                <span class="notification-status" aria-hidden="true"></span>
+                                <span class="notification-copy"><strong>@notification.Title</strong><small>@notification.Message</small><time datetime="@notification.CreatedAt.ToString("O")">@notification.CreatedAt.ToString("dd.MM.yyyy · HH:mm")</time></span>
+                                <span class="notification-arrow" aria-hidden="true">›</span>
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </section>
+        <section class="panel compact-panel" aria-labelledby="tasksTitle">
+            <div class="panel-head"><div><span class="panel-kicker">ЖЕКЕ БАҚЫЛАУ</span><h3 id="tasksTitle">Менің тапсырмаларым</h3></div>@if (role is AppRoles.Administrator or AppRoles.DeanerySpecialist or AppRoles.Executor) { <a class="panel-link" asp-controller="Tasks" asp-action="Index">Ашу <span>→</span></a> }</div>
+            @if (Model.UpcomingTasks.Count == 0)
+            {
+                <div class="dashboard-empty">Ашық тапсырма жоқ.</div>
+            }
+            else
+            {
+                <div class="dashboard-task-list">
+                    @foreach (var task in Model.UpcomingTasks.Take(4))
+                    {
+                        <a asp-controller="Documents" asp-action="Details" asp-route-id="@task.DocumentId" class="dashboard-task">
+                            <span class="task-marker"></span><span class="dashboard-task-copy"><strong>@(task.TaskDescription ?? task.Document?.Title ?? "Тапсырма")</strong><small>@task.Document?.RegistrationNumber · @(task.DueDate?.ToString("dd.MM.yyyy") ?? "Мерзім белгіленбеген")</small></span><span class="task-arrow">→</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </aside>
+</section>
+
+<section class="dashboard-lower-grid">
+    <section class="panel" aria-labelledby="recentDocumentsTitle">
+        <div class="panel-head"><div><span class="panel-kicker">ЖҰМЫС АҒЫНЫ</span><h3 id="recentDocumentsTitle">Соңғы құжаттар</h3></div><a class="panel-link" asp-controller="Documents" asp-action="Index">Барлық құжат <span>→</span></a></div>
+        @if (Model.RecentDocuments.Count == 0)
+        {
+            <div class="dashboard-empty">Көрсетуге қолжетімді құжат жоқ.</div>
+        }
+        else
+        {
+            <div class="recent-document-list">
+                @foreach (var document in Model.RecentDocuments.Take(6))
+                {
+                    <a asp-controller="Documents" asp-action="Details" asp-route-id="@document.DocumentId" class="recent-document">
+                        <span class="recent-doc-symbol"><svg><use href="#i-files" /></svg></span><span class="recent-doc-main"><strong>@document.Title</strong><small>@document.RegistrationNumber <i>·</i> @document.RegisteredAt.ToString("dd.MM.yyyy") <i>·</i> @document.Direction</small></span><span class="recent-doc-state"><span class="status-badge @StageClass(document.Status)">@document.Status?.StatusName</span></span><span class="recent-doc-arrow">→</span>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="panel analytics-panel" aria-labelledby="activityTitle">
+        <div class="panel-head"><div><span class="panel-kicker">СОҢҒЫ ӘРЕКЕТТЕР</span><h3 id="activityTitle">Құжат тарихы</h3></div><span class="panel-pill">Нақты деректер</span></div>
+        @if (Model.RecentActivity.Count == 0)
+        {
+            <div class="dashboard-empty">Әзірге әрекет тіркелмеген.</div>
+        }
+        else
+        {
+            <div class="activity-list">
+                @foreach (var activity in Model.RecentActivity)
+                {
+                    <div class="activity-item"><span class="activity-marker"></span><div><strong>@activity.ActionType</strong><p>@(activity.Description ?? activity.Document?.Title ?? "Құжат жаңартылды")</p><small>@activity.ActionDate.ToString("dd.MM.yyyy · HH:mm") <i>·</i> @(activity.User?.FullName ?? "Жүйе")</small></div></div>
+                }
+            </div>
+        }
+    </section>
+</section>
+
+<section class="dashboard-insights-grid">
+    <section class="panel insight-panel" aria-labelledby="monthlyTitle">
+        <div class="panel-head"><div><span class="panel-kicker">ТІРКЕУ ДИНАМИКАСЫ</span><h3 id="monthlyTitle">Соңғы алты ай</h3></div></div>
+        <div class="monthly-bars" role="img" aria-label="Соңғы алты айдағы тіркелген құжаттар саны">
+            @foreach (var item in Model.MonthlySummary)
+            {
+                var height = Math.Max(5, item.Count * 100d / maxMonthly);
+                <div class="monthly-bar-column"><strong>@item.Count</strong><span class="monthly-bar-track"><i style="height:@height.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></i></span><small>@item.Label</small></div>
+            }
+        </div>
+    </section>
+    <section class="panel insight-panel" aria-labelledby="statusTitle">
+        <div class="panel-head"><div><span class="panel-kicker">ҚАЗІРГІ БӨЛІНІС</span><h3 id="statusTitle">Құжат мәртебелері</h3></div><span class="status-total">@Model.TotalDocuments <small>құжат</small></span></div>
+        @if (Model.StatusSummary.Count == 0)
+        {
+            <div class="dashboard-empty">Мәртебе деректері жоқ.</div>
+        }
+        else
+        {
+            <div class="dashboard-status-list">
+                @foreach (var status in Model.StatusSummary)
+                {
+                    var width = status.Count * 100d / Math.Max(1, Model.StatusSummary.Max(x => x.Count));
+                    var color = statusColors[Model.StatusSummary.IndexOf(status) % statusColors.Length];
+                    <div class="dashboard-status-row"><span class="status-name">@status.Label</span><span class="status-track"><i style="width:@width.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%;background:@color"></i></span><strong>@status.Count</strong></div>
+                }
+            </div>
+        }
+    </section>
+</section>

@@ -1,0 +1,4 @@
+@model DocumentFormInput
+@{ ViewData["Title"] = "Құжатты өңдеу"; }
+<div class="page-toolbar"><div><h2>Құжатты өңдеу</h2><p>Өзгерістер тарих журналына тіркеледі.</p></div><a asp-action="Details" asp-route-id="@Model.DocumentId" class="btn btn-outline-primary">← Құжатқа қайту</a></div>
+<section class="panel"><div class="panel-body"><partial name="_DocumentForm" model="Model" /></div></section>

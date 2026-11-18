@@ -1,0 +1,34 @@
+@model IReadOnlyList<ExecutorAssignment>
+@{
+    var range = (string)(ViewBag.Range ?? "active");
+    var isExecutor = User.IsInRole(AppRoles.Executor);
+    ViewData["Title"] = isExecutor ? "Менің тапсырмаларым" : "Орындаушылардың тапсырмалары";
+}
+<div class="page-toolbar"><div><h2>@ViewData["Title"]</h2><p>Орындаушыға бекітілген құжаттар мен тапсырма мерзімдері</p></div></div>
+<div class="toolbar-actions mb-3 flex-wrap">
+    @foreach (var item in new[] { ("active", "Белсенді"), ("today", "Бүгін"), ("soon", "3 күн"), ("week", "Осы апта"), ("overdue", "Мерзімі өткен"), ("completed", "Аяқталған") })
+    { <a asp-action="Index" asp-route-range="@item.Item1" class="btn @(range == item.Item1 ? "btn-primary" : "btn-outline-primary")">@item.Item2</a> }
+</div>
+<section class="table-panel">
+@if (Model.Count == 0) { <div class="empty-state"><div class="empty-icon">✓</div><strong>Бұл сүзгіде тапсырма жоқ</strong><p>Тағайындалған тапсырмалар осы жерде көрсетіледі.</p></div> }
+else
+{
+    <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Құжат</th><th>Орындаушы</th><th>Тапсырма мазмұны</th><th>Мәртебе</th><th>Мерзім</th><th>Әрекет</th></tr></thead><tbody>
+    @foreach (var item in Model)
+    {
+        var overdue = item.DueDate.HasValue && item.DueDate.Value.Date < DateTime.Today && item.CompletedAt is null;
+        <tr><td><a class="doc-number" asp-controller="Documents" asp-action="Details" asp-route-id="@item.DocumentId">@item.Document?.RegistrationNumber</a><div class="doc-title">@item.Document?.Title</div></td><td>@item.User?.FullName</td><td>@(item.TaskDescription ?? "—")</td><td><span class="status-badge @(item.CompletedAt.HasValue ? "is-complete" : overdue ? "is-danger" : "is-progress")">@(item.CompletedAt.HasValue ? "Аяқталған" : overdue ? "Мерзімі өтті" : item.Document?.Status?.StatusName)</span></td><td>@(item.DueDate?.ToString("dd.MM.yyyy") ?? "—")</td><td>
+            @if (isExecutor && item.CompletedAt is null)
+            {
+                <div class="d-flex gap-1">
+                    @if (WorkflowService.Stage(item.Document?.Status) != "inprogress") { <form asp-action="UpdateStatus" method="post"><input type="hidden" name="assignmentId" value="@item.DocumentExecutorId"/><input type="hidden" name="status" value="start"/><button class="btn btn-sm btn-soft" type="submit">Бастау</button></form> }
+                    <form asp-action="UpdateStatus" method="post"><input type="hidden" name="assignmentId" value="@item.DocumentExecutorId"/><input type="hidden" name="status" value="complete"/><button class="btn btn-sm btn-outline-primary" type="submit">Аяқтау</button></form>
+                </div>
+            }
+            else { <span class="small-muted">@(item.CompletedAt?.ToString("dd.MM.yyyy") ?? "—")</span> }
+        </td></tr>
+    }
+    </tbody></table></div>
+}
+<div class="table-foot"><span>@Model.Count тапсырма көрсетілді</span><span>Аяқталған: @Model.Count(x => x.CompletedAt.HasValue)</span></div>
+</section>

@@ -1,0 +1,71 @@
+@model DocumentFormInput
+@{
+    var isEdit = Model.DocumentId.HasValue;
+    var isStudent = User.IsInRole(AppRoles.Student);
+    var targetAction = isStudent ? "CreateRequest" : isEdit ? "Edit" : "Create";
+    var types = ViewBag.DocumentTypes as IReadOnlyList<DocumentType> ?? [];
+    var departments = ViewBag.Departments as IReadOnlyList<Department> ?? [];
+}
+<form asp-action="@targetAction" method="post" class="document-form">
+    @if (Model.DocumentId.HasValue) { <input asp-for="DocumentId" type="hidden" /> }
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors mb-3"></div>
+
+    <section class="form-section">
+        <header class="form-section-head"><span>01</span><div><h3>Негізгі ақпарат</h3><p>Құжаттың атауы мен қысқаша мазмұны</p></div></header>
+        <div class="row g-3">
+            <div class="col-lg-8"><label asp-for="Title" class="form-label">Құжат атауы <span class="required-mark">*</span></label><input asp-for="Title" class="form-control" placeholder="Мысалы: Оқу ақысына жеңілдік беру туралы өтініш" /><span asp-validation-for="Title" class="field-validation-error"></span></div>
+            <div class="col-lg-4"><label asp-for="DocumentTypeId" class="form-label">Құжат түрі <span class="required-mark">*</span></label><select asp-for="DocumentTypeId" class="form-select"><option value="">Таңдаңыз</option>@foreach (var item in types) { <option value="@item.DocumentTypeId">@item.TypeName</option> }</select><span asp-validation-for="DocumentTypeId" class="field-validation-error"></span></div>
+            <div class="col-12"><label asp-for="Description" class="form-label">Қысқаша мазмұны</label><textarea asp-for="Description" class="form-control" rows="3" placeholder="Құжаттың мақсаты немесе қосымша түсіндірмесі"></textarea><span asp-validation-for="Description" class="field-validation-error"></span></div>
+        </div>
+    </section>
+
+    @if (!isStudent)
+    {
+        <section class="form-section">
+            <header class="form-section-head"><span>02</span><div><h3>Бағыты және мерзімі</h3><p>Құжат қозғалысының негізгі параметрлері</p></div></header>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="Direction" class="form-label">Бағыты <span class="required-mark">*</span></label><select asp-for="Direction" class="form-select"><option>Кіріс</option><option>Шығыс</option><option>Ішкі</option></select></div>
+                <div class="col-md-4"><label asp-for="Priority" class="form-label">Маңыздылығы</label><select asp-for="Priority" class="form-select"><option>Төмен</option><option>Қалыпты</option><option>Жоғары</option><option>Шұғыл</option></select></div>
+                <div class="col-md-4"><label asp-for="DocumentDate" class="form-label">Құжат күні</label><input asp-for="DocumentDate" type="date" class="form-control" /></div>
+            </div>
+        </section>
+        <section class="form-section">
+            <header class="form-section-head"><span>03</span><div><h3>Жіберуші және алушы</h3><p>Қатысушы тараптар мен сыртқы тіркеу деректері</p></div></header>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="SenderName" class="form-label">Жіберуші</label><input asp-for="SenderName" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="RecipientName" class="form-label">Алушы</label><input asp-for="RecipientName" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="SenderOrganization" class="form-label">Жіберуші ұйымы</label><input asp-for="SenderOrganization" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="RecipientOrganization" class="form-label">Алушы ұйымы</label><input asp-for="RecipientOrganization" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="ExternalNumber" class="form-label">Сыртқы нөмірі</label><input asp-for="ExternalNumber" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="ExternalDate" class="form-label">Сыртқы құжат күні</label><input asp-for="ExternalDate" type="date" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="ReceivedMethod" class="form-label">Қабылдау тәсілі</label><input asp-for="ReceivedMethod" class="form-control" placeholder="Электрондық пошта, қағаз түрінде" /></div>
+                <div class="col-md-6"><label asp-for="DeliveryMethod" class="form-label">Жеткізу тәсілі</label><input asp-for="DeliveryMethod" class="form-control" /></div>
+            </div>
+        </section>
+        <section class="form-section">
+            <header class="form-section-head"><span>04</span><div><h3>Орындау</h3><p>Жауапты бөлім және құжатты орындау мерзімі</p></div></header>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="DepartmentId" class="form-label">Жауапты бөлім</label><select asp-for="DepartmentId" class="form-select"><option value="">Бөлімді таңдаңыз</option>@foreach (var item in departments) { <option value="@item.DepartmentId">@item.DepartmentName</option> }</select></div>
+                <div class="col-md-6"><label asp-for="DueDate" class="form-label">Орындау мерзімі</label><input asp-for="DueDate" type="date" class="form-control" /></div>
+            </div>
+        </section>
+    }
+    else
+    {
+        <input asp-for="Direction" type="hidden" value="Кіріс" /><input asp-for="Priority" type="hidden" value="Қалыпты" />
+        <section class="form-section">
+            <header class="form-section-head"><span>02</span><div><h3>Өтініш деректері</h3><p>Қажет болса, сыртқы нөмір мен жауап мерзімін көрсетіңіз</p></div></header>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="DocumentDate" class="form-label">Құжат күні</label><input asp-for="DocumentDate" type="date" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="DueDate" class="form-label">Қалаған жауап мерзімі</label><input asp-for="DueDate" type="date" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="ExternalNumber" class="form-label">Сыртқы құжат нөмірі</label><input asp-for="ExternalNumber" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="ExternalDate" class="form-label">Сыртқы құжат күні</label><input asp-for="ExternalDate" type="date" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="SenderOrganization" class="form-label">Ұйым немесе жіберуші</label><input asp-for="SenderOrganization" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="ReceivedMethod" class="form-label">Қабылдау тәсілі</label><input asp-for="ReceivedMethod" class="form-control" /></div>
+            </div>
+        </section>
+    }
+
+    <div class="document-form-actions"><a asp-action="@(isStudent ? "My" : "Index")" class="btn btn-outline-primary">Болдырмау</a><button type="submit" class="btn btn-primary">@(isEdit ? "Өзгерістерді сақтау" : isStudent ? "Өтініш жіберу" : "Құжат тіркеу")</button></div>
+</form>
+<partial name="_ValidationScriptsPartial" />

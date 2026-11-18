@@ -1,0 +1,17 @@
+@model AdminOverviewViewModel
+@{ ViewData["Title"] = "Басқару панелі"; }
+<div class="welcome-row"><div><h2>Әкімшілеу</h2><p>Пайдаланушылар, бөлімдер және құжат баптаулары</p></div><a asp-action="Audit" class="btn btn-outline-primary">Аудит журналын ашу</a></div>
+<div class="stats-grid">
+    <a asp-action="Users" class="stat-card"><div class="stat-top"><span>Пайдаланушылар</span><span class="stat-icon">♙</span></div><div class="stat-value">@Model.Users</div><div class="stat-foot">Белсенді: @Model.ActiveUsers</div></a>
+    <a asp-action="Departments" class="stat-card"><div class="stat-top"><span>Бөлімдер</span><span class="stat-icon green">⌂</span></div><div class="stat-value">@Model.Departments</div><div class="stat-foot">Белсенді: @Model.ActiveDepartments</div></a>
+    <a asp-action="Types" class="stat-card"><div class="stat-top"><span>Құжат түрлері</span><span class="stat-icon orange">▤</span></div><div class="stat-value">@Model.DocumentTypes</div><div class="stat-foot">Белсенді: @Model.ActiveTypes</div></a>
+    <a asp-action="Audit" class="stat-card"><div class="stat-top"><span>Аудит жазбалары</span><span class="stat-icon">≡</span></div><div class="stat-value">@Model.AuditEntries.ToString("N0")</div><div class="stat-foot">Рөлдер саны: @Model.Roles</div></a>
+</div>
+<div class="dashboard-grid equal">
+    <a asp-action="Users" class="panel"><div class="panel-head"><h3>♙ &nbsp;Пайдаланушылар</h3><span class="small-muted">Басқару →</span></div><div class="panel-body small-muted">Тіркелгі қосу, рөл мен бөлім беру, белсенділігін және құпиясөзін басқару.</div></a>
+    <a asp-action="Departments" class="panel"><div class="panel-head"><h3>⌂ &nbsp;Бөлімдер</h3><span class="small-muted">Басқару →</span></div><div class="panel-body small-muted">Бөлімдерді қосу, өңдеу және белсенділігін ауыстыру.</div></a>
+    <a asp-action="Types" class="panel"><div class="panel-head"><h3>▤ &nbsp;Құжат түрлері</h3><span class="small-muted">Басқару →</span></div><div class="panel-body small-muted">Тіркеу кодтарын және қолжетімді құжат түрлерін басқару.</div></a>
+    <a asp-action="Roles" class="panel"><div class="panel-head"><h3>⛨ &nbsp;Қауіпсіздік рөлдері</h3><span class="small-muted">Қарау →</span></div><div class="panel-body small-muted">Рөлдер — алдын ала орнатылған жүйелік мәндер. Рөл тағайындау пайдаланушы жазбасынан орындалады.</div></a>
+    <a asp-action="Statuses" class="panel"><div class="panel-head"><h3>◷ &nbsp;Құжат мәртебелері</h3><span class="small-muted">Қарау →</span></div><div class="panel-body small-muted">Жұмыс ағынына байланған мәртебелер бар құжатқа кері әсер етпес үшін өшірілмейді.</div></a>
+    <a asp-action="Audit" class="panel"><div class="panel-head"><h3>≡ &nbsp;Аудит журналы</h3><span class="small-muted">Ашу →</span></div><div class="panel-body small-muted">Кіру, құжат өзгерісі, тапсырма беру және келісім әрекеттерінің журналы.</div></a>
+</div>

@@ -1,0 +1,170 @@
+@{
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Қолданушы";
+    var firstName = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "U";
+    var avatarText = string.IsNullOrWhiteSpace(firstName) ? "U" : firstName.Substring(0, 1).ToUpperInvariant();
+    var roleName = role switch { AppRoles.Administrator => "Әкімші", AppRoles.DeanerySpecialist => "Деканат маманы", AppRoles.Executor => "Орындаушы", AppRoles.Management => "Басшылық", AppRoles.Student => "Студент", _ => role };
+    var isAdmin = role == AppRoles.Administrator;
+    var isDeanery = role == AppRoles.DeanerySpecialist;
+    var isExecutor = role == AppRoles.Executor;
+    var isManagement = role == AppRoles.Management;
+    var isStudent = role == AppRoles.Student;
+    var canManageDocuments = isAdmin || isDeanery;
+    var pageTitle = ViewData["Title"]?.ToString() ?? "Жұмыс кеңістігі";
+    var sectionTitle = ViewData["Section"]?.ToString() ?? controller switch
+    {
+        "Documents" => "Құжаттар",
+        "Tasks" => "Тапсырмалар",
+        "Approvals" => "Келісу",
+        "Deadlines" => "Мерзімдер",
+        "Reports" => "Талдау",
+        "Admin" => "Басқару",
+        "Notifications" => "Хабарландырулар",
+        "Account" => "Профиль",
+        _ => "Жұмыс кеңістігі"
+    };
+}
+<!DOCTYPE html>
+<html lang="kk" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#F8F9FC" />
+    <title>@pageTitle · UniDoc Space</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/unidoc.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/unidoc-atlas.css" asp-append-version="true" />
+</head>
+<body class="site-app" data-controller="@(controller?.ToLowerInvariant())" data-action="@(action?.ToLowerInvariant())">
+<a class="skip-link" href="#mainContent">Негізгі мазмұнға өту</a>
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/></symbol>
+    <symbol id="i-files" viewBox="0 0 24 24"><path d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24"><path d="M12 3v12m0 0 5-5m-5 5-5-5"/><path d="M5 17v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M12 21V9m0 0L7 14m5-5 5 5"/><path d="M5 7V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><path d="M4 4h16v4H4zM5 8v12h14V8M9 12h6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10m5 10V4m5 16v-7m5 7V7"/><path d="M2 20h20"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.8 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.8-1l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.8-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.8 1l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-audit" viewBox="0 0 24 24"><path d="M8 4h11v17H5V4h3m0-2h6v4H8zM8 11h8m-8 4h8"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+</svg>
+<div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar" aria-label="Негізгі мәзір">
+        <a class="brand" asp-controller="Home" asp-action="Index" aria-label="UniDoc Space басты беті">
+            <span class="brand-mark"><img src="~/images/aiu-mark.png" asp-append-version="true" alt="AIU" /></span><span class="brand-text"><strong>UniDoc <em>Space</em></strong><small>Деканаттың цифрлық құжат айналымы</small></span>
+        </a>
+        <div class="sidebar-scroll">
+            <div class="sidebar-caption">ЖҰМЫС КЕҢІСТІГІ</div>
+            <nav class="side-nav" aria-label="Негізгі навигация">
+                <a class="side-link @(controller == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index"><svg class="nav-icon"><use href="#i-home" /></svg><span>Басты бет</span></a>
+                <a class="side-link @(controller == "Home" && action == "SiteMap" ? "active" : "")" asp-controller="Home" asp-action="SiteMap"><svg class="nav-icon"><use href="#i-folder" /></svg><span>Сайт картасы</span></a>
+                @if (isStudent)
+                {
+                    <a class="side-link @(controller == "Documents" ? "active" : "")" asp-controller="Documents" asp-action="My"><svg class="nav-icon"><use href="#i-files" /></svg><span>Өтініштерім</span></a>
+                    <a class="side-link" asp-controller="Documents" asp-action="CreateRequest"><svg class="nav-icon"><use href="#i-plus" /></svg><span>Өтініш беру</span></a>
+                }
+                else
+                {
+                    <a class="side-link @(controller == "Documents" && action != "Archive" ? "active" : "")" asp-controller="Documents" asp-action="Index"><svg class="nav-icon"><use href="#i-files" /></svg><span>Барлық құжат</span></a>
+                    <a class="side-link" asp-controller="Documents" asp-action="Index" asp-route-direction="Кіріс"><svg class="nav-icon"><use href="#i-in" /></svg><span>Кіріс құжат</span></a>
+                    <a class="side-link" asp-controller="Documents" asp-action="Index" asp-route-direction="Шығыс"><svg class="nav-icon"><use href="#i-out" /></svg><span>Шығыс құжат</span></a>
+                    <a class="side-link" asp-controller="Documents" asp-action="Index" asp-route-direction="Ішкі"><svg class="nav-icon"><use href="#i-folder" /></svg><span>Ішкі құжат</span></a>
+                }
+            </nav>
+            @if (!isStudent)
+            {
+                <div class="sidebar-caption sidebar-caption-spaced">ҮРДІСТЕР</div>
+                <nav class="side-nav" aria-label="Құжат үдерістері">
+                    @if (isAdmin || isDeanery || isExecutor) { <a class="side-link @(controller == "Tasks" ? "active" : "")" asp-controller="Tasks" asp-action="Index"><svg class="nav-icon"><use href="#i-check" /></svg><span>@(isExecutor ? "Менің тапсырмаларым" : "Тапсырмалар")</span></a> }
+                    @if (isAdmin || isManagement) { <a class="side-link @(controller == "Approvals" ? "active" : "")" asp-controller="Approvals" asp-action="Index"><svg class="nav-icon"><use href="#i-check" /></svg><span>Келісу</span></a> }
+                    @if (isAdmin || isDeanery || isManagement) { <a class="side-link @(controller == "Deadlines" ? "active" : "")" asp-controller="Deadlines" asp-action="Index"><svg class="nav-icon"><use href="#i-clock" /></svg><span>Мерзімдер</span></a> }
+                    @if (canManageDocuments) { <a class="side-link @(controller == "Documents" && action == "Archive" ? "active" : "")" asp-controller="Documents" asp-action="Archive"><svg class="nav-icon"><use href="#i-archive" /></svg><span>Мұрағат</span></a> }
+                </nav>
+            }
+            @if (isAdmin || isDeanery || isManagement)
+            {
+                <div class="sidebar-caption sidebar-caption-spaced">ТАЛДАУ</div>
+                <nav class="side-nav" aria-label="Есептер">
+                    <a class="side-link @(controller == "Reports" ? "active" : "")" asp-controller="Reports" asp-action="Index"><svg class="nav-icon"><use href="#i-chart" /></svg><span>Есептер мен талдау</span></a>
+                </nav>
+            }
+            @if (isAdmin)
+            {
+                <div class="sidebar-caption sidebar-caption-spaced">ӘКІМШІЛЕНДІРУ</div>
+                <nav class="side-nav" aria-label="Әкімшілік">
+                    <a class="side-link @(controller == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index"><svg class="nav-icon"><use href="#i-settings" /></svg><span>Басқару панелі</span></a>
+                    <a class="side-link" asp-controller="Admin" asp-action="Audit"><svg class="nav-icon"><use href="#i-audit" /></svg><span>Әрекеттер журналы</span></a>
+                </nav>
+            }
+            @if (isStudent)
+            {
+                <div class="sidebar-caption sidebar-caption-spaced">ЖЕКЕ БӨЛІМ</div>
+                <nav class="side-nav" aria-label="Жеке бөлім">
+                    <a class="side-link @(controller == "Notifications" ? "active" : "")" asp-controller="Notifications" asp-action="Index"><svg class="nav-icon"><use href="#i-bell" /></svg><span>Хабарландырулар</span></a>
+                    <a class="side-link @(controller == "Account" ? "active" : "")" asp-controller="Account" asp-action="Profile"><svg class="nav-icon"><use href="#i-user" /></svg><span>Профиль</span></a>
+                </nav>
+            }
+            else
+            {
+                <div class="sidebar-caption sidebar-caption-spaced">ЖЕКЕ БӨЛІМ</div>
+                <nav class="side-nav" aria-label="Жеке бөлім">
+                    <a class="side-link @(controller == "Notifications" ? "active" : "")" asp-controller="Notifications" asp-action="Index"><svg class="nav-icon"><use href="#i-bell" /></svg><span>Хабарландырулар</span></a>
+                    <a class="side-link @(controller == "Account" ? "active" : "")" asp-controller="Account" asp-action="Profile"><svg class="nav-icon"><use href="#i-user" /></svg><span>Профиль</span></a>
+                </nav>
+            }
+        </div>
+        <div class="sidebar-bottom">
+            <div class="sidebar-motto"><svg><use href="#i-spark" /></svg><span><strong>Құжат. Бақылау. Нәтиже.</strong><small>Бір кеңістік. Ортақ тәртіп.</small></span></div>
+            <div class="sidebar-version">UniDoc Space <span>·</span> Деканат жүйесі</div>
+        </div>
+    </aside>
+    <main class="main-column" id="mainContent" tabindex="-1">
+        <header class="topbar">
+            <button class="icon-button menu-button" id="sidebarToggle" type="button" aria-label="Мәзірді жинау немесе ашу" aria-expanded="false" title="Мәзірді жинау немесе ашу"><svg><use href="#i-menu" /></svg></button>
+            <div class="topbar-title"><div class="breadcrumb-line"><span>UniDoc Space</span><span class="breadcrumb-separator">/</span><span>@sectionTitle</span></div><h1>@pageTitle</h1></div>
+            <div class="topbar-actions">
+                <a class="sitemap-top-link" asp-controller="Home" asp-action="SiteMap"><svg><use href="#i-folder" /></svg><span>Сайт картасы</span></a>
+                <form class="global-search" asp-controller="Search" asp-action="Index" method="get" role="search">
+                    <svg aria-hidden="true"><use href="#i-search" /></svg><input name="q" placeholder="Құжатты іздеу..." aria-label="Құжатты іздеу" /><kbd>Ctrl K</kbd>
+                </form>
+                @if (canManageDocuments && !(controller == "Documents" && action == "Index")) { <a class="btn btn-primary topbar-create" asp-controller="Documents" asp-action="Create"><svg><use href="#i-plus" /></svg><span>Құжат тіркеу</span></a> }
+                @if (isStudent && !(controller == "Documents" && action is "My" or "CreateRequest")) { <a class="btn btn-primary topbar-create" asp-controller="Documents" asp-action="CreateRequest"><svg><use href="#i-plus" /></svg><span>Өтініш беру</span></a> }
+                <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Тақырып ауыстыру" title="Жарық/қараңғы режим"><svg class="theme-sun"><use href="#i-sun" /></svg><svg class="theme-moon"><use href="#i-moon" /></svg></button>
+                <a class="icon-button notification-button" asp-controller="Notifications" asp-action="Index" aria-label="Хабарландырулар"><svg><use href="#i-bell" /></svg>@if (ViewData["UnreadNotifications"] is int unread && unread > 0) { <span class="notification-count">@(unread > 9 ? "9+" : unread)</span> }</a>
+                <div class="profile-menu">
+                    <button class="profile-trigger" type="button" aria-haspopup="true"><span class="avatar">@avatarText</span><span class="profile-name"><strong>@fullName</strong><small>@roleName</small></span><span class="profile-chevron">⌄</span></button>
+                    <div class="profile-dropdown"><a asp-controller="Account" asp-action="Profile"><svg><use href="#i-user" /></svg>Профильді ашу</a><form asp-controller="Account" asp-action="Logout" method="post"><button type="submit"><svg><use href="#i-arrow" /></svg>Жүйеден шығу</button></form></div>
+                </div>
+            </div>
+        </header>
+        <section class="page-content">
+            @if (TempData["Success"] is string success) { <div class="alert alert-success alert-dismissible fade show" role="alert"><span class="alert-mark">✓</span>@success<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Жабу"></button></div> }
+            @if (TempData["Error"] is string error) { <div class="alert alert-danger alert-dismissible fade show" role="alert"><span class="alert-mark">!</span>@error<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Жабу"></button></div> }
+            @RenderBody()
+        </section>
+        <footer class="page-footer"><span>© @DateTime.Now.Year UniDoc Space</span><span>Деканаттың бірыңғай цифрлық кеңістігі</span></footer>
+    </main>
+</div>
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+<div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content confirm-dialog"><div class="confirm-icon">!</div><div><h2 id="confirmModalTitle">Әрекетті растау</h2><p id="confirmModalMessage">Осы әрекетті орындауға сенімдісіз бе?</p></div><div class="confirm-actions"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Болдырмау</button><button type="button" class="btn btn-danger" id="confirmModalSubmit">Жалғастыру</button></div></div></div></div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

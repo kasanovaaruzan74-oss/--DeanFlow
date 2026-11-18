@@ -1,0 +1,2 @@
+@{ var code = (int)(ViewBag.StatusCode ?? 404); ViewData["Title"] = code == 404 ? "Бет табылмады" : "Сұрауды орындау мүмкін болмады"; }
+<section class="panel"><div class="empty-state"><div class="empty-icon">@code</div><strong>@(code == 404 ? "Бұл бет табылмады" : "Сұрауды орындау мүмкін болмады")</strong><p>@(code == 404 ? "Мекенжайды тексеріңіз немесе басты бетке қайтыңыз." : "Сұрауға қолжетімділік жоқ немесе оны өңдеу мүмкін болмады.")</p><a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">Басты бетке оралу</a></div></section>

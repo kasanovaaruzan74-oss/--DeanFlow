@@ -1,0 +1,21 @@
+@model AdminUserInput
+@{ var edit = Model.UserId.HasValue; ViewData["Title"] = edit ? "Пайдаланушыны өңдеу" : "Пайдаланушы қосу"; var roles = ViewBag.Roles as IReadOnlyList<Role> ?? []; var departments = ViewBag.Departments as IReadOnlyList<Department> ?? []; }
+<div class="page-toolbar"><div><h2>@ViewData["Title"]</h2><p>@(edit ? "Есептік жазбаны және рұқсат деңгейін жаңартыңыз." : "Жаңа есептік жазба ашыңыз және бастапқы құпиясөз белгілеңіз.")</p></div><a asp-action="Users" class="btn btn-outline-primary">← Пайдаланушылар</a></div>
+<section class="panel"><div class="panel-body"><form asp-action="@(edit ? "UserEdit" : "UserCreate")" method="post">
+    <input asp-for="UserId" type="hidden"/><div asp-validation-summary="ModelOnly" class="validation-summary-errors mb-3"></div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="FirstName" class="form-label">Аты *</label><input asp-for="FirstName" class="form-control"/><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
+        <div class="col-md-6"><label asp-for="LastName" class="form-label">Тегі *</label><input asp-for="LastName" class="form-control"/><span asp-validation-for="LastName" class="field-validation-error"></span></div>
+        <div class="col-md-6"><label asp-for="MiddleName" class="form-label">Әкесінің аты</label><input asp-for="MiddleName" class="form-control"/></div>
+        <div class="col-md-6"><label asp-for="Email" class="form-label">Электрондық пошта *</label><input asp-for="Email" class="form-control" autocomplete="off"/><span asp-validation-for="Email" class="field-validation-error"></span></div>
+        <div class="col-md-4"><label asp-for="RoleId" class="form-label">Жүйедегі рөлі *</label><select asp-for="RoleId" class="form-select"><option value="">Рөлді таңдаңыз</option>@foreach (var role in roles) { <option value="@role.RoleId">@role.RoleName</option> }</select><span asp-validation-for="RoleId" class="field-validation-error"></span></div>
+        <div class="col-md-4"><label asp-for="DepartmentId" class="form-label">Бөлімі</label><select asp-for="DepartmentId" class="form-select"><option value="">Бөлімсіз</option>@foreach (var department in departments) { <option value="@department.DepartmentId">@department.DepartmentName</option> }</select></div>
+        <div class="col-md-4"><label asp-for="Position" class="form-label">Лауазымы</label><input asp-for="Position" class="form-control"/></div>
+        <div class="col-md-6"><label asp-for="Phone" class="form-label">Телефон</label><input asp-for="Phone" class="form-control"/></div>
+        <div class="col-md-6"><label asp-for="NewPassword" class="form-label">@(edit ? "Жаңа құпиясөз (қажет болса)" : "Уақытша құпиясөз *")</label><input asp-for="NewPassword" class="form-control" autocomplete="new-password"/><div class="form-text">Кемінде 10 таңба. Құпиясөз хэш түрінде ғана сақталады.</div><span asp-validation-for="NewPassword" class="field-validation-error"></span></div>
+        <div class="col-12"><label class="form-check"><input asp-for="IsActive" class="form-check-input"/><span class="form-check-label small-muted">Тіркелгі белсенді</span></label></div>
+    </div>
+    @if (edit) { <div class="confirm-box mt-3">Рөлді ауыстыру қолжетімділікті бірден өзгертеді. Соңғы белсенді әкімшіні өшіруге болмайды.</div> }
+    <div class="d-flex justify-content-end mt-4"><button type="submit" class="btn btn-primary">Сақтау</button></div>
+</form></div></section>
+<partial name="_ValidationScriptsPartial" />

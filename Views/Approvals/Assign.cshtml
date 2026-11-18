@@ -1,0 +1,13 @@
+@model ApprovalAssignmentInput
+@{
+    var document = ViewBag.Document as DeanDocument;
+    var approvers = ViewBag.Approvers as IReadOnlyList<AppUser> ?? [];
+    ViewData["Title"] = "Келісуге жіберу";
+}
+<div class="page-toolbar"><div><h2>Келісуші тағайындау</h2><p>@document?.RegistrationNumber · @document?.Title</p></div><a asp-controller="Documents" asp-action="Details" asp-route-id="@Model.DocumentId" class="btn btn-outline-primary">← Құжатқа қайту</a></div>
+<section class="panel"><div class="panel-body">
+    <div class="db-warning">Келісу тізбегіне бір келісуші қосылады. Шешімдер кезек ретімен қабылданады.</div>
+    @if (approvers.Count == 0) { <div class="db-warning">Белсенді әкімші немесе басқарушы жоқ.</div> }
+    <form asp-action="Assign" method="post"><input asp-for="DocumentId" type="hidden"/><div asp-validation-summary="ModelOnly" class="validation-summary-errors mb-3"></div><div class="mb-3"><label asp-for="ApproverUserId" class="form-label">Келісуші *</label><select asp-for="ApproverUserId" class="form-select"><option value="">Пайдаланушыны таңдаңыз</option>@foreach (var user in approvers) { <option value="@user.UserId">@user.FullName · @user.Role?.RoleName</option> }</select><span asp-validation-for="ApproverUserId" class="field-validation-error"></span></div><div class="d-flex justify-content-end"><button class="btn btn-primary" type="submit">Келісуге жіберу</button></div></form>
+</div></section>
+<partial name="_ValidationScriptsPartial" />

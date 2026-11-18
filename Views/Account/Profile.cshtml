@@ -1,0 +1,36 @@
+@model ProfileInput
+@{
+    ViewData["Title"] = "Менің профилім";
+}
+<div class="page-toolbar"><div><h2>Профиль мәліметтері</h2><p>Жеке ақпаратыңызды және құпиясөзіңізді басқару</p></div></div>
+<div class="profile-layout">
+    <section class="profile-card">
+        <h3>Жеке мәліметтер</h3>
+        <form asp-action="Profile" method="post">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors mb-3"></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="FirstName" class="form-label">Аты</label><input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
+                <div class="col-md-6"><label asp-for="LastName" class="form-label">Тегі</label><input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="field-validation-error"></span></div>
+                <div class="col-md-6"><label asp-for="MiddleName" class="form-label">Әкесінің аты</label><input asp-for="MiddleName" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Phone" class="form-label">Телефон</label><input asp-for="Phone" class="form-control" /></div>
+            </div>
+            <hr class="my-4" style="border-color:var(--line)" />
+            <h3>Құпиясөзді өзгерту</h3>
+            <p class="small-muted mb-3">Өзгеріс енгізбесеңіз, бұл бөлімді бос қалдырыңыз.</p>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="CurrentPassword" class="form-label">Қазіргі құпиясөз</label><input asp-for="CurrentPassword" class="form-control" autocomplete="current-password" /><span asp-validation-for="CurrentPassword" class="field-validation-error"></span></div>
+                <div class="col-md-4"><label asp-for="NewPassword" class="form-label">Жаңа құпиясөз</label><input asp-for="NewPassword" class="form-control" autocomplete="new-password" /><span asp-validation-for="NewPassword" class="field-validation-error"></span></div>
+                <div class="col-md-4"><label asp-for="ConfirmPassword" class="form-label">Қайталап енгізіңіз</label><input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" /><span asp-validation-for="ConfirmPassword" class="field-validation-error"></span></div>
+            </div>
+            <div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" type="submit">Өзгерістерді сақтау</button></div>
+        </form>
+    </section>
+    <aside class="profile-card profile-side">
+        <div class="profile-big-avatar">@(Model.FirstName.FirstOrDefault().ToString().ToUpperInvariant())</div>
+        <strong>@Model.FirstName @Model.LastName</strong><small>@ViewBag.Role</small>
+        <hr />
+        <div class="info-field"><label>Электрондық пошта</label><span>@ViewBag.Email</span></div>
+        <div class="info-field"><label>Бөлім</label><span>@(ViewBag.Department ?? "Тағайындалмаған")</span></div>
+    </aside>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

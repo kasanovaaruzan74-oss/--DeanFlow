@@ -1,0 +1,4 @@
+@model IReadOnlyList<Role>
+@{ ViewData["Title"] = "Жүйе рөлдері"; }
+<div class="page-toolbar"><div><h2>Жүйе рөлдері</h2><p>Жүйедегі тұрақты рөлдерге пайдаланушы құқығы байланған.</p></div></div>
+<section class="table-panel"><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Рөл</th><th>Сипаттамасы</th><th>Жүйелік ереже</th></tr></thead><tbody>@foreach (var item in Model) { <tr><td><strong>@item.RoleName</strong></td><td>@(item.Description ?? "—")</td><td><span class="status-badge is-neutral">Алдын ала орнатылған</span></td></tr> }</tbody></table></div><div class="table-foot"><span>@Model.Count рөл</span><span>Рөл пайдаланушыны өңдеу кезінде тағайындалады</span></div></section>

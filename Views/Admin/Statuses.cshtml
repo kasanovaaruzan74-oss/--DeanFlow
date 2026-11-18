@@ -1,0 +1,5 @@
+@model IReadOnlyList<DocumentStatus>
+@{ ViewData["Title"] = "Құжат мәртебелері"; }
+<div class="page-toolbar"><div><h2>Құжат мәртебелері</h2><p>Жұмыс процесінде пайдаланылатын күй коды мен сипаттамалар.</p></div></div>
+<div class="db-warning">Бұл мәртебелер құжат тарихы мен жұмыс ағынына байланған. Қате күй ауысуын болдырмау үшін осы беттен өшіру не кодын ауыстыру қарастырылмаған.</div>
+<section class="table-panel"><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Код</th><th>Мәртебе</th><th>Сипаттамасы</th></tr></thead><tbody>@foreach (var item in Model) { <tr><td><span class="doc-number">@item.StatusCode</span></td><td>@item.StatusName</td><td>@(item.Description ?? "—")</td></tr> }</tbody></table></div><div class="table-foot"><span>@Model.Count мәртебе</span><span>Жүйелік мәндер өзгеріссіз сақталады</span></div></section>

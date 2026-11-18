@@ -1,0 +1,56 @@
+@model DocumentListViewModel
+@{
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    var canManage = role is AppRoles.Administrator or AppRoles.DeanerySpecialist;
+    var directionChips = new[] { ("Барлығы", ""), ("Кіріс", "Кіріс"), ("Шығыс", "Шығыс"), ("Ішкі", "Ішкі") };
+    string Badge(DocumentStatus? status) => WorkflowService.Stage(status) switch
+    {
+        "completed" or "archived" => "is-complete", "inprogress" or "assigned" => "is-progress",
+        "approval" or "review" or "registered" => "is-pending", "overdue" or "rejected" or "returned" => "is-danger", _ => "is-neutral"
+    };
+}
+<div class="page-toolbar"><div><h2>@ViewData["Title"]</h2><p>Іздеу, сүзу және құжаттарды тіркеу</p></div><div class="toolbar-actions">
+@if (canManage) { <a asp-action="Create" class="btn btn-primary">＋ Құжат тіркеу</a> }
+@if (role == AppRoles.Student) { <a asp-action="CreateRequest" class="btn btn-primary">＋ Өтініш беру</a> }
+</div></div>
+<nav class="filter-chips" aria-label="Құжат бағыты бойынша жылдам сүзу">
+    @foreach (var item in directionChips)
+    {
+        var isCurrent = string.IsNullOrEmpty(item.Item2) ? string.IsNullOrEmpty(Model.Direction) : Model.Direction == item.Item2;
+        <a class="filter-chip @(isCurrent ? "is-active" : "")" asp-action="Index" asp-route-q="@Model.Query" asp-route-direction="@item.Item2" asp-route-statusCode="@Model.StatusCode" asp-route-priority="@Model.Priority" asp-route-departmentId="@Model.DepartmentId" asp-route-documentTypeId="@Model.DocumentTypeId" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")">
+            <span class="filter-chip-dot"></span>@item.Item1
+        </a>
+    }
+</nav>
+<form class="filter-panel" method="get">
+    <div class="filter-grid">
+        <div class="wide-mobile"><label class="form-label" for="q">Іздеу</label><input class="form-control" id="q" name="q" value="@Model.Query" placeholder="№, атауы, жіберуші немесе алушы" /></div>
+        <div><label class="form-label" for="direction">Бағыт</label><select class="form-select" id="direction" name="direction"><option value="">Барлығы</option><option selected="@(Model.Direction == "Кіріс")">Кіріс</option><option selected="@(Model.Direction == "Шығыс")">Шығыс</option><option selected="@(Model.Direction == "Ішкі")">Ішкі</option></select></div>
+        <div><label class="form-label" for="statusCode">Мәртебе</label><select class="form-select" id="statusCode" name="statusCode"><option value="">Барлығы</option>@foreach (var status in Model.Statuses) { <option value="@status.StatusCode" selected="@(Model.StatusCode == status.StatusCode)">@status.StatusName</option> }</select></div>
+        <div><label class="form-label" for="documentTypeId">Құжат түрі</label><select class="form-select" id="documentTypeId" name="documentTypeId"><option value="">Барлығы</option>@foreach (var type in Model.Types) { <option value="@type.DocumentTypeId" selected="@(Model.DocumentTypeId == type.DocumentTypeId)">@type.TypeName</option> }</select></div>
+        <div><label class="form-label" for="priority">Басымдық</label><select class="form-select" id="priority" name="priority"><option value="">Барлығы</option>@foreach (var value in new[] { "Төмен", "Қалыпты", "Жоғары", "Шұғыл" }) { <option value="@value" selected="@(Model.Priority == value)">@value</option> }</select></div>
+        <div><label class="form-label" for="departmentId">Бөлім</label><select class="form-select" id="departmentId" name="departmentId"><option value="">Барлығы</option>@foreach (var department in Model.Departments) { <option value="@department.DepartmentId" selected="@(Model.DepartmentId == department.DepartmentId)">@department.ShortName</option> }</select></div>
+        <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Сүзу</button><a asp-action="Index" class="btn btn-outline-primary">Тазарту</a></div>
+    </div>
+    <div class="row g-2 mt-2"><div class="col-auto"><label class="form-label" for="from">Тіркелген күні, бастап</label><input class="form-control" type="date" id="from" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" /></div><div class="col-auto"><label class="form-label" for="to">дейін</label><input class="form-control" type="date" id="to" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" /></div></div>
+</form>
+<section class="table-panel">
+    @if (Model.Documents.Count == 0) { <div class="empty-state"><div class="empty-icon">⌕</div><strong>Сәйкес құжат табылмады</strong><p>Сүзгілерді өзгертіп көріңіз немесе жаңа құжат тіркеңіз.</p></div> }
+    else
+    {
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>№</th><th>Құжат / түрі</th><th>Бағыт</th><th>Мәртебе</th><th>Басымдық</th><th>Бөлім</th><th>Орындаушы</th><th>Тіркелген / мерзімі</th><th></th></tr></thead><tbody>
+        @foreach (var document in Model.Documents)
+        {
+            var primaryExecutor = document.Executors.FirstOrDefault(x => x.IsPrimary)?.User ?? document.Executors.FirstOrDefault()?.User;
+            var overdue = document.DueDate.HasValue && document.DueDate.Value.Date < DateTime.Today && document.CompletedAt is null;
+            var priorityClass = document.Priority.Contains("Жоғары") || document.Priority.Contains("Шұғыл") ? "high" : document.Priority.Contains("Төмен") ? "low" : "medium";
+            <tr><td><a class="doc-number" asp-action="Details" asp-route-id="@document.DocumentId">@document.RegistrationNumber</a></td><td><div class="doc-title">@document.Title<small>@document.DocumentType?.TypeName</small></div></td><td>@document.Direction</td><td><span class="status-badge @Badge(document.Status)">@document.Status?.StatusName</span></td><td><span class="priority-badge @priorityClass">@document.Priority</span></td><td>@(document.Department?.ShortName ?? "—")</td><td>@(primaryExecutor?.FullName ?? "—")</td><td>@document.RegisteredAt.ToString("dd.MM.yyyy")<small class="d-block @(overdue ? "text-danger fw-bold" : "text-muted")">@(overdue ? "Мерзімі өтті · " : "")@(document.DueDate?.ToString("dd.MM.yyyy") ?? "Мерзім жоқ")</small></td><td><a class="btn btn-sm btn-soft" asp-action="Details" asp-route-id="@document.DocumentId">Ашу</a></td></tr>
+        }
+        </tbody></table></div>
+    }
+    <div class="table-foot"><span>@Model.TotalCount құжат · бет @Model.Page / @Model.PageCount</span><nav class="pagination" aria-label="Беттер">
+        @if (Model.Page > 1) { <a asp-action="Index" asp-route-q="@Model.Query" asp-route-direction="@Model.Direction" asp-route-statusCode="@Model.StatusCode" asp-route-priority="@Model.Priority" asp-route-departmentId="@Model.DepartmentId" asp-route-documentTypeId="@Model.DocumentTypeId" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")" asp-route-page="@(Model.Page - 1)">‹</a> }
+        @for (var number = Math.Max(1, Model.Page - 2); number <= Math.Min(Model.PageCount, Model.Page + 2); number++) { if (number == Model.Page) { <span class="current">@number</span> } else { <a asp-action="Index" asp-route-q="@Model.Query" asp-route-direction="@Model.Direction" asp-route-statusCode="@Model.StatusCode" asp-route-priority="@Model.Priority" asp-route-departmentId="@Model.DepartmentId" asp-route-documentTypeId="@Model.DocumentTypeId" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")" asp-route-page="@number">@number</a> } }
+        @if (Model.Page < Model.PageCount) { <a asp-action="Index" asp-route-q="@Model.Query" asp-route-direction="@Model.Direction" asp-route-statusCode="@Model.StatusCode" asp-route-priority="@Model.Priority" asp-route-departmentId="@Model.DepartmentId" asp-route-documentTypeId="@Model.DocumentTypeId" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")" asp-route-page="@(Model.Page + 1)">›</a> }
+    </nav></div>
+</section>

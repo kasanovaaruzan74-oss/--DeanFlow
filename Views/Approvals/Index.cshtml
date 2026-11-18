@@ -1,0 +1,18 @@
+@model IReadOnlyList<DocumentApproval>
+@{ ViewData["Title"] = "Келісу кезегі"; }
+<div class="page-toolbar"><div><h2>Келісу кезегі</h2><p>@(User.IsInRole(AppRoles.Management) ? "Өзіңізге тағайындалған құжаттар" : "Кезекте тұрған барлық құжаттар")</p></div></div>
+<section class="table-panel">
+    @if (Model.Count == 0) { <div class="empty-state"><div class="empty-icon">◷</div><strong>Келісуді күткен құжат жоқ</strong><p>Жаңа құжат келісуге келгенде осында көрінеді.</p></div> }
+    else
+    {
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Құжат</th><th>Күйі</th><th>Келісуші / кезегі</th><th>Тағайындалған</th><th>Шешім</th></tr></thead><tbody>
+        @foreach (var item in Model)
+        {
+            <tr><td><a class="doc-number" asp-controller="Documents" asp-action="Details" asp-route-id="@item.DocumentId">@item.Document?.RegistrationNumber</a><div class="doc-title">@item.Document?.Title<small>@item.Document?.DocumentType?.TypeName</small></div></td><td><span class="status-badge is-pending">@item.Document?.Status?.StatusName</span></td><td>@item.Approver?.FullName<small class="d-block">Кезек @item.ApprovalOrder</small></td><td>@item.AssignedAt.ToString("dd.MM.yyyy HH:mm")</td><td>
+                <form asp-action="Decide" method="post" class="approval-decision-form d-flex flex-column gap-1" data-confirm="Шешімді құжатқа тіркеуді растайсыз ба?" style="min-width:210px"><input type="hidden" name="approvalId" value="@item.ApprovalId"/><textarea name="comment" class="form-control" maxlength="1000" rows="2" placeholder="Пікір · қайтару/қабылдамау себебі міндетті"></textarea><div class="approval-actions"><button class="btn btn-sm btn-primary" name="decision" value="approve" type="submit">Келісу</button><button class="btn btn-sm btn-outline-primary" name="decision" value="return" type="submit">Қайтару</button><button class="btn btn-sm btn-outline-primary" name="decision" value="reject" type="submit">Қабылдамау</button></div></form>
+            </td></tr>
+        }
+        </tbody></table></div>
+    }
+    <div class="table-foot"><span>@Model.Count күтіп тұрған келісім</span><span>Кезегімен бекітіледі</span></div>
+</section>

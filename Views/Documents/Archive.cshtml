@@ -1,0 +1,17 @@
+@model DocumentListViewModel
+@{ ViewData["Title"] = "Құжат архиві"; }
+<div class="page-toolbar"><div><h2>Архив</h2><p>Архивке жіберілген құжаттар. Қажет болса, қайта қалпына келтіріңіз.</p></div></div>
+<form class="filter-panel" method="get"><div class="filter-grid" style="grid-template-columns:2fr auto"><div><label class="form-label" for="q">Іздеу</label><input class="form-control" id="q" name="q" value="@Model.Query" placeholder="Тіркеу нөмірі немесе құжат атауы" /></div><button class="btn btn-primary" type="submit">Іздеу</button></div></form>
+<section class="table-panel">
+@if (Model.Documents.Count == 0) { <div class="empty-state"><div class="empty-icon">▣</div><strong>Архив бос</strong><p>Архивке жіберілген құжаттар осы жерде сақталады.</p></div> }
+else
+{
+    <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Тіркеу №</th><th>Құжат</th><th>Түрі</th><th>Бөлім</th><th>Архивтелген күні</th><th></th></tr></thead><tbody>
+    @foreach (var doc in Model.Documents)
+    {
+        <tr><td><a class="doc-number" asp-action="Details" asp-route-id="@doc.DocumentId">@doc.RegistrationNumber</a></td><td><div class="doc-title">@doc.Title<small>@doc.Status?.StatusName</small></div></td><td>@doc.DocumentType?.TypeName</td><td>@(doc.Department?.ShortName ?? "—")</td><td>@doc.ArchivedAt?.ToString("dd.MM.yyyy HH:mm")</td><td><form asp-action="Restore" method="post" data-confirm="Бұл құжатты мұрағаттан қалпына келтіресіз бе?"><input type="hidden" name="id" value="@doc.DocumentId" /><button class="btn btn-sm btn-outline-primary" type="submit">Қалпына келтіру</button></form></td></tr>
+    }
+    </tbody></table></div>
+}
+<div class="table-foot"><span>@Model.TotalCount архивтік құжат · бет @Model.Page / @Model.PageCount</span><nav class="pagination">@if (Model.Page > 1) { <a asp-action="Archive" asp-route-q="@Model.Query" asp-route-page="@(Model.Page-1)">‹</a> }<span class="current">@Model.Page</span>@if (Model.Page < Model.PageCount) { <a asp-action="Archive" asp-route-q="@Model.Query" asp-route-page="@(Model.Page+1)">›</a> }</nav></div>
+</section>

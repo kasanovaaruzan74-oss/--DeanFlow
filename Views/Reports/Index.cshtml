@@ -1,0 +1,26 @@
+@model ReportViewModel
+@{
+    ViewData["Title"] = "Есептер мен аналитика";
+    var maxMonth = Math.Max(1, Model.ByMonth.Count == 0 ? 1 : Model.ByMonth.Max(x => x.Count));
+    int MaxOf(IReadOnlyList<(string Label, int Count)> data) => Math.Max(1, data.Count == 0 ? 1 : data.Max(x => x.Count));
+}
+<div class="page-toolbar"><div><h2>Есептер мен аналитика</h2><p>Құжат айналымын кезең, түр, бөлім және орындаушы бойынша талдау</p></div><a asp-action="ExportCsv" asp-route-from="@Model.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.To?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">↓ CSV жүктеу</a></div>
+<form asp-action="Index" method="get" class="filter-panel"><div class="d-flex align-items-end gap-2 flex-wrap"><div><label class="form-label" for="from">Басталу күні</label><input class="form-control" type="date" id="from" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" /></div><div><label class="form-label" for="to">Аяқталу күні</label><input class="form-control" type="date" id="to" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" /></div><button class="btn btn-primary" type="submit">Қолдану</button><a asp-action="Index" class="btn btn-outline-primary">Барлық кезең</a></div></form>
+<div asp-validation-summary="All" class="validation-summary-errors mb-2"></div>
+<div class="stats-grid">
+    <article class="stat-card"><div class="stat-top"><span>Барлық құжат</span><span class="stat-icon">▤</span></div><div class="stat-value">@Model.Total.ToString("N0")</div><div class="stat-foot">Таңдалған кезеңде</div></article>
+    <article class="stat-card"><div class="stat-top"><span>Кіріс құжат</span><span class="stat-icon green">↙</span></div><div class="stat-value">@Model.Incoming.ToString("N0")</div><div class="stat-foot">Кіріс айналымы</div></article>
+    <article class="stat-card"><div class="stat-top"><span>Орындалған</span><span class="stat-icon green">✓</span></div><div class="stat-value">@Model.Completed.ToString("N0")</div><div class="stat-foot">Жабылған құжаттар</div></article>
+    <article class="stat-card"><div class="stat-top"><span>Мерзімі өткен</span><span class="stat-icon red">!</span></div><div class="stat-value">@Model.Overdue.ToString("N0")</div><div class="stat-foot">Аяқталмаған, мерзімі өткен</div></article>
+</div>
+<div class="dashboard-grid">
+    <section class="panel"><div class="panel-head"><div><h3>Айлық динамика</h3><p>Соңғы 12 айдағы тіркеулер</p></div></div><div class="panel-body"><div class="mini-chart">@foreach (var item in Model.ByMonth) { var height = item.Count == 0 ? 4 : Math.Max(8, item.Count * 100 / maxMonth); <div class="chart-column"><span class="chart-value">@item.Count</span><div class="chart-bar-wrap"><div class="chart-bar" style="height:@height%"></div></div><span class="chart-label">@item.Label</span></div> }</div></div></section>
+    <section class="panel"><div class="panel-head"><div><h3>Қосымша көрсеткіштер</h3><p>Бағыт және орындау жылдамдығы</p></div></div><div class="panel-body summary-list"><div class="summary-row"><span class="summary-label">Шығыс құжат</span><div class="summary-track"><div class="summary-fill" style="width:@(Model.Total == 0 ? 0 : Model.Outgoing * 100 / Model.Total)%"></div></div><span class="summary-count">@Model.Outgoing</span></div><div class="summary-row"><span class="summary-label">Орташа орындалу</span><div class="summary-track"><div class="summary-fill" style="width:@(Model.AverageCompletionDays.HasValue ? Math.Min(100, Model.AverageCompletionDays.Value * 3) : 0)%"></div></div><span class="summary-count">@(Model.AverageCompletionDays?.ToString("N1") ?? "—") күн</span></div><div class="small-muted">Орташа уақыт тіркеуден аяқталған күнге дейін есептеледі.</div></div></section>
+</div>
+<div class="dashboard-grid equal">
+    @foreach (var panel in new[] { (Title: "Мәртебелер", Data: Model.ByStatus), (Title: "Құжат түрлері", Data: Model.ByType), (Title: "Бөлімдер", Data: Model.ByDepartment), (Title: "Орындаушылар жүктемесі", Data: Model.ByExecutor) })
+    {
+        var max = MaxOf(panel.Data);
+        <section class="panel"><div class="panel-head"><div><h3>@panel.Title</h3><p>Құжат саны</p></div></div><div class="panel-body">@if (panel.Data.Count == 0) { <div class="empty-state"><strong>Дерек жоқ</strong></div> } else { <div class="summary-list">@foreach (var row in panel.Data) { <div class="summary-row"><span class="summary-label" title="@row.Label">@row.Label</span><div class="summary-track"><div class="summary-fill" style="width:@(row.Count * 100 / max)%"></div></div><span class="summary-count">@row.Count</span></div> }</div> }</div></section>
+    }
+</div>

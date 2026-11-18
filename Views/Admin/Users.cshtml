@@ -1,0 +1,9 @@
+@model IReadOnlyList<AppUser>
+@{ ViewData["Title"] = "Пайдаланушылар"; }
+<div class="page-toolbar"><div><h2>Пайдаланушылар</h2><p>Белсенді: @Model.Count(x => x.IsActive) · Барлығы: @ViewBag.Total</p></div><a asp-action="UserCreate" class="btn btn-primary">＋ Пайдаланушы қосу</a></div>
+<form method="get" class="filter-panel"><div class="d-flex gap-2"><input class="form-control" name="q" value="@ViewBag.Query" placeholder="Аты, тегі немесе электрондық пошта"/><button class="btn btn-primary" type="submit">Іздеу</button></div></form>
+<section class="table-panel">
+    @if (Model.Count == 0) { <div class="empty-state"><strong>Пайдаланушы табылмады</strong><p>Іздеу сөзін өзгертіңіз немесе жаңа пайдаланушы қосыңыз.</p></div> }
+    else { <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Пайдаланушы</th><th>Рөлі</th><th>Бөлім</th><th>Телефон</th><th>Соңғы кіру</th><th>Күйі</th><th></th></tr></thead><tbody>@foreach (var user in Model) { <tr><td><div class="doc-title">@user.FullName<small>@user.Email · @user.Position</small></div></td><td>@user.Role?.RoleName</td><td>@(user.Department?.ShortName ?? "—")</td><td>@(user.Phone ?? "—")</td><td>@(user.LastLoginAt?.ToString("dd.MM.yyyy HH:mm") ?? "Кірмеген")</td><td><span class="status-badge @(user.IsActive ? "is-complete" : "is-neutral")">@(user.IsActive ? "Белсенді" : "Өшірілген")</span></td><td><a asp-action="UserEdit" asp-route-id="@user.UserId" class="btn btn-sm btn-soft">Өңдеу</a></td></tr> }</tbody></table></div> }
+    <div class="table-foot"><span>@ViewBag.Total пайдаланушы · бет @ViewBag.Page / @ViewBag.PageCount</span><nav class="pagination">@if ((int)ViewBag.Page > 1) { <a asp-action="Users" asp-route-q="@ViewBag.Query" asp-route-page="@((int)ViewBag.Page-1)">‹</a> }<span class="current">@ViewBag.Page</span>@if ((int)ViewBag.Page < (int)ViewBag.PageCount) { <a asp-action="Users" asp-route-q="@ViewBag.Query" asp-route-page="@((int)ViewBag.Page+1)">›</a> }</nav></div>
+</section>

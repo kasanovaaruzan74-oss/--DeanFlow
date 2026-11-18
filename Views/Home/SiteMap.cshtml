@@ -1,0 +1,82 @@
+@{
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    var isStudent = role == AppRoles.Student;
+    var isAdmin = role == AppRoles.Administrator;
+    var isDeanery = role == AppRoles.DeanerySpecialist;
+    var isExecutor = role == AppRoles.Executor;
+    var isManager = role is AppRoles.Administrator or AppRoles.DeanerySpecialist or AppRoles.Management;
+    var canApprove = role is AppRoles.Administrator or AppRoles.Management;
+}
+
+<div class="sitemap-intro"><span class="sitemap-eyebrow">UNIDOC SPACE · НАВИГАЦИЯ</span><h2>Сайт картасы</h2><p>Рөліңізге қолжетімді бөлімдер мен жұмыс құралдары.</p></div>
+
+<div class="sitemap-grid">
+    <section class="sitemap-group">
+        <div class="sitemap-group-title"><span class="sitemap-group-icon"><svg><use href="#i-files" /></svg></span><div><h3>Құжат айналымы</h3><p>Тіркеу және қарау</p></div></div>
+        <nav aria-label="Құжат айналымы">
+            @if (isStudent)
+            {
+                <a asp-controller="Documents" asp-action="My">Менің өтініштерім <span>→</span></a>
+                <a asp-controller="Documents" asp-action="CreateRequest">Өтініш жіберу <span>→</span></a>
+            }
+            else
+            {
+                <a asp-controller="Documents" asp-action="Index">Барлық құжат <span>→</span></a>
+                <a asp-controller="Documents" asp-action="Index" asp-route-direction="Кіріс">Кіріс құжаттар <span>→</span></a>
+                <a asp-controller="Documents" asp-action="Index" asp-route-direction="Шығыс">Шығыс құжаттар <span>→</span></a>
+                <a asp-controller="Documents" asp-action="Index" asp-route-direction="Ішкі">Ішкі құжаттар <span>→</span></a>
+                @if (isAdmin || isDeanery)
+                {
+                    <a asp-controller="Documents" asp-action="Create">Құжат тіркеу <span>→</span></a>
+                    <a asp-controller="Documents" asp-action="Archive">Мұрағат <span>→</span></a>
+                }
+            }
+        </nav>
+    </section>
+
+    @if (!isStudent)
+    {
+        <section class="sitemap-group">
+            <div class="sitemap-group-title"><span class="sitemap-group-icon"><svg><use href="#i-check" /></svg></span><div><h3>Үдерістер</h3><p>Орындау және бақылау</p></div></div>
+            <nav aria-label="Үдерістер">
+                @if (isAdmin || isDeanery || isExecutor) { <a asp-controller="Tasks" asp-action="Index">Тапсырмалар <span>→</span></a> }
+                @if (canApprove) { <a asp-controller="Approvals" asp-action="Index">Келісу <span>→</span></a> }
+                @if (isManager) { <a asp-controller="Deadlines" asp-action="Index">Мерзімдер <span>→</span></a> }
+                @if (isManager)
+                {
+                    <a asp-controller="Reports" asp-action="Index">Есептер мен талдау <span>→</span></a>
+                    <a asp-controller="Reports" asp-action="ExportCsv">CSV есебін жүктеу <span>→</span></a>
+                }
+            </nav>
+        </section>
+    }
+
+    <section class="sitemap-group">
+        <div class="sitemap-group-title"><span class="sitemap-group-icon"><svg><use href="#i-bell" /></svg></span><div><h3>Жеке бөлім</h3><p>Аккаунт және хабарламалар</p></div></div>
+        <nav aria-label="Жеке бөлім">
+            <a asp-controller="Search" asp-action="Index">Құжаттан іздеу <span>→</span></a>
+            <a asp-controller="Notifications" asp-action="Index">Хабарландырулар <span>→</span></a>
+            <a asp-controller="Account" asp-action="Profile">Профиль <span>→</span></a>
+            <a asp-controller="Home" asp-action="Index">Жұмыс кеңістігі <span>→</span></a>
+        </nav>
+    </section>
+
+    @if (isAdmin)
+    {
+        <section class="sitemap-group">
+            <div class="sitemap-group-title"><span class="sitemap-group-icon"><svg><use href="#i-settings" /></svg></span><div><h3>Әкімшілік басқару</h3><p>Жүйе анықтамалықтары</p></div></div>
+            <nav aria-label="Әкімшілік басқару">
+                <a asp-controller="Admin" asp-action="Index">Басқару панелі <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Users">Пайдаланушылар <span>→</span></a>
+                <a asp-controller="Admin" asp-action="UserCreate">Пайдаланушы қосу <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Departments">Бөлімдер <span>→</span></a>
+                <a asp-controller="Admin" asp-action="DepartmentEdit">Бөлім қосу <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Types">Құжат түрлері <span>→</span></a>
+                <a asp-controller="Admin" asp-action="TypeEdit">Құжат түрін қосу <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Statuses">Құжат мәртебелері <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Roles">Жүйе рөлдері <span>→</span></a>
+                <a asp-controller="Admin" asp-action="Audit">Әрекеттер журналы <span>→</span></a>
+            </nav>
+        </section>
+    }
+</div>

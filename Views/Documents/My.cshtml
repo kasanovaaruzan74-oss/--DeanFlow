@@ -1,0 +1,18 @@
+@model IReadOnlyList<DeanDocument>
+@{
+    ViewData["Title"] = "Өтініштерім";
+}
+<div class="page-toolbar"><div><h2>Өтініштерім</h2><p>Жіберген өтініштеріңіздің мәртебесі мен қозғалысы.</p></div><a asp-action="CreateRequest" class="btn btn-primary">＋ Жаңа өтініш</a></div>
+<section class="table-panel">
+    @if (Model.Count == 0) { <div class="empty-state"><div class="empty-icon">▤</div><strong>Өтініш әлі жіберілмеген</strong><p>Жаңа өтініш берсеңіз, орындалу барысы осында көрінеді.</p></div> }
+    else
+    {
+        <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Тіркеу №</th><th>Өтініш</th><th>Күйі</th><th>Жіберілген күні</th><th>Мерзім</th><th></th></tr></thead><tbody>
+        @foreach (var doc in Model)
+        {
+            var statusClass = WorkflowService.Stage(doc.Status) switch { "completed" => "is-complete", "inprogress" or "assigned" => "is-progress", "rejected" or "returned" or "overdue" => "is-danger", _ => "is-pending" };
+            <tr><td><span class="doc-number">@doc.RegistrationNumber</span></td><td><div class="doc-title">@doc.Title<small>@doc.DocumentType?.TypeName</small></div></td><td><span class="status-badge @statusClass">@doc.Status?.StatusName</span></td><td>@doc.RegisteredAt.ToString("dd.MM.yyyy")</td><td>@(doc.DueDate?.ToString("dd.MM.yyyy") ?? "—")</td><td><a asp-action="Details" asp-route-id="@doc.DocumentId" class="btn btn-sm btn-soft">Бақылау</a></td></tr>
+        }
+        </tbody></table></div>
+    }
+</section>

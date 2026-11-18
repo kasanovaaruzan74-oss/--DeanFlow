@@ -1,0 +1,104 @@
+@model DeanDocument
+@{
+    var canManage = ViewBag.CanManage == true;
+    var canComment = ViewBag.CanComment == true;
+    var canAssign = ViewBag.CanAssign == true;
+    var canApprove = ViewBag.CanApprove == true;
+    var stage = WorkflowService.Stage(Model.Status);
+    var badge = stage switch { "completed" or "archived" => "is-complete", "inprogress" or "assigned" => "is-progress", "approval" or "review" or "registered" => "is-pending", "overdue" or "returned" or "rejected" => "is-danger", _ => "is-neutral" };
+    var progressStage = stage switch { "draft" => 0, "registered" => 1, "review" => 2, "assigned" or "inprogress" or "overdue" => 3, "approval" => 4, "completed" or "archived" => 5, _ => -1 };
+    var flowStages = new[] { "Жоба", "Тіркелді", "Қаралуда", "Орындалуда", "Келісуде", "Аяқталды" };
+    ViewData["Title"] = Model.RegistrationNumber;
+}
+<div class="detail-hero">
+    <div><div class="d-flex align-items-center gap-2 flex-wrap"><span class="doc-number">@Model.RegistrationNumber</span><span class="status-badge @badge">@Model.Status?.StatusName</span><span class="priority-badge @(Model.Priority.Contains("Шұғыл") || Model.Priority.Contains("Жоғары") ? "high" : Model.Priority.Contains("Төмен") ? "low" : "medium")">@Model.Priority</span></div><h2>@Model.Title</h2><div class="detail-meta">@Model.DocumentType?.TypeName &nbsp;·&nbsp; @Model.Direction &nbsp;·&nbsp; Тіркелген @Model.RegisteredAt.ToString("dd MMMM yyyy")</div></div>
+    <div class="detail-actions">
+        @if (canManage)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.DocumentId" class="btn btn-outline-primary">Өңдеу</a>
+            <a asp-controller="Tasks" asp-action="Assign" asp-route-documentId="@Model.DocumentId" class="btn btn-soft">Орындаушы тағайындау</a>
+            @if (stage is "completed" or "approval") { <a asp-controller="Approvals" asp-action="Assign" asp-route-documentId="@Model.DocumentId" class="btn btn-soft">Келісуге жіберу</a> }
+            @if (!Model.IsArchived)
+            {
+                <form asp-action="ArchiveDocument" method="post" data-confirm="Бұл құжатты архивке жібересіз бе?"><input type="hidden" name="id" value="@Model.DocumentId" /><button class="btn btn-outline-primary" type="submit">Архивтеу</button></form>
+            }
+        }
+        @if (canManage && !Model.IsArchived)
+        {
+            if (stage == "draft") { <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@Model.DocumentId"/><input type="hidden" name="targetStage" value="registered"/><button class="btn btn-primary" type="submit">Тіркеу</button></form> }
+            if (stage == "registered") { <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@Model.DocumentId"/><input type="hidden" name="targetStage" value="review"/><button class="btn btn-primary" type="submit">Қарауға жіберу</button></form> }
+            if (stage == "returned") { <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@Model.DocumentId"/><input type="hidden" name="targetStage" value="assigned"/><button class="btn btn-primary" type="submit">Қайта орындауға жіберу</button></form> }
+            if (stage is "review" or "assigned") { <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@Model.DocumentId"/><input type="hidden" name="targetStage" value="inprogress"/><button class="btn btn-primary" type="submit">Орындауды бастау</button></form> }
+            if (stage == "inprogress") { <form asp-action="ChangeStatus" method="post"><input type="hidden" name="id" value="@Model.DocumentId"/><input type="hidden" name="targetStage" value="completed"/><button class="btn btn-primary" type="submit">Орындалды</button></form> }
+        }
+        @if (canApprove && stage == "approval") { <a asp-controller="Approvals" asp-action="Index" class="btn btn-primary">Келісімді ашу</a> }
+    </div>
+</div>
+<section class="document-progress" aria-label="Құжаттың орындалу кезеңдері">
+    @if (stage is "returned" or "rejected")
+    {
+        <div class="progress-exception @(stage == "rejected" ? "exception-danger" : "")"><span>!</span><div><strong>@(stage == "returned" ? "Құжат қайта қарауға қайтарылды" : "Құжат қабылданбады")</strong><small>@Model.Status?.StatusName — себебі мен келесі әрекетті құжат тарихынан қараңыз.</small></div></div>
+    }
+    else
+    {
+        <div class="stepper">
+            @for (var i = 0; i < flowStages.Length; i++)
+            {
+                var stepClass = progressStage < 0 ? "" : i < progressStage ? "is-done" : i == progressStage ? "is-current" : "";
+                <div class="stepper-item @stepClass"><span class="stepper-marker">@(i < progressStage ? "✓" : (i + 1).ToString())</span><span class="stepper-label">@flowStages[i]</span></div>
+            }
+        </div>
+        @if (stage == "overdue") { <div class="stepper-overdue">Құжаттың белгіленген мерзімі өтіп кеткен.</div> }
+    }
+</section>
+<nav class="detail-tabs" aria-label="Құжат бөлімдері">
+    <a href="#doc-info">Құжат туралы</a><a href="#doc-executors">Орындаушылар <span>@Model.Executors.Count</span></a>
+    <a href="#doc-approvals">Келісу <span>@Model.Approvals.Count</span></a><a href="#doc-files">Файлдар <span>@Model.Attachments.Count</span></a>
+    <a href="#doc-comments">Пікірлер <span>@Model.Comments.Count</span></a><a href="#doc-history">Тарих</a>
+</nav>
+<div class="detail-grid">
+    <div class="d-flex flex-column gap-3">
+        <section class="panel" id="doc-info"><div class="panel-head"><h3>Құжат туралы</h3></div><div class="panel-body detail-info-grid">
+            <div class="info-field"><label>Құжат күні</label><span>@Model.DocumentDate.ToString("dd.MM.yyyy")</span></div>
+            <div class="info-field"><label>Жауапты бөлім</label><span>@(Model.Department?.DepartmentName ?? "Тағайындалмаған")</span></div>
+            <div class="info-field"><label>Жіберуші</label><span>@(Model.SenderName ?? Model.Incoming?.SenderOrganization ?? "—")</span></div>
+            <div class="info-field"><label>Алушы</label><span>@(Model.RecipientName ?? Model.Outgoing?.RecipientOrganization ?? "—")</span></div>
+            <div class="info-field"><label>Орындау мерзімі</label><span>@(Model.DueDate?.ToString("dd.MM.yyyy") ?? "Мерзім қойылмаған")</span></div>
+            <div class="info-field"><label>Тіркеген</label><span>@(Model.CreatedBy?.FullName ?? "—")</span></div>
+            @if (Model.Incoming is not null)
+            {
+                <div class="info-field"><label>Сыртқы нөмір / күні</label><span>@(Model.Incoming.ExternalNumber ?? "—") · @(Model.Incoming.ExternalDate?.ToString("dd.MM.yyyy") ?? "—")</span></div>
+                <div class="info-field"><label>Қабылдау тәсілі</label><span>@(Model.Incoming.ReceivedMethod ?? "—")</span></div>
+            }
+            @if (Model.Outgoing is not null)
+            {
+                <div class="info-field"><label>Жеткізу тәсілі</label><span>@(Model.Outgoing.DeliveryMethod ?? "—")</span></div>
+                <div class="info-field"><label>Жіберілген күні</label><span>@(Model.Outgoing.SentAt?.ToString("dd.MM.yyyy") ?? "Жіберілмеген")</span></div>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Description)) { <div class="panel-body pt-0"><div class="info-field"><label>Қысқаша мазмұны</label><span class="fw-normal">@Model.Description</span></div></div> }
+        </section>
+        <section class="panel" id="doc-executors"><div class="panel-head"><div><h3>Орындаушылар</h3><p>Тапсырылған қызметкерлер мен мерзімдері</p></div>@if (canAssign) { <a asp-controller="Tasks" asp-action="Assign" asp-route-documentId="@Model.DocumentId" class="small-muted">＋ Тағайындау</a> }</div>
+            @if (!Model.Executors.Any()) { <div class="panel-body small-muted">Орындаушы әлі тағайындалмаған.</div> }
+            else { <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Орындаушы</th><th>Тапсырма</th><th>Берілген күні</th><th>Мерзімі</th><th>Күйі</th></tr></thead><tbody>@foreach (var assignment in Model.Executors.OrderByDescending(x => x.IsPrimary)) { <tr><td>@assignment.User?.FullName @if (assignment.IsPrimary) { <span class="small-muted">· негізгі</span> }</td><td>@(assignment.TaskDescription ?? "—")</td><td>@assignment.AssignedAt.ToString("dd.MM.yyyy")</td><td>@(assignment.DueDate?.ToString("dd.MM.yyyy") ?? "—")</td><td><span class="status-badge @(assignment.CompletedAt.HasValue ? "is-complete" : "is-progress")">@(assignment.CompletedAt.HasValue ? "Аяқталған" : "Белсенді")</span></td></tr> }</tbody></table></div> }
+        </section>
+        <section class="panel" id="doc-approvals"><div class="panel-head"><div><h3>Келісу</h3><p>Бекіту тізбегі мен қабылданған шешімдер</p></div>@if (canManage) { <a asp-controller="Approvals" asp-action="Assign" asp-route-documentId="@Model.DocumentId" class="small-muted">＋ Қосу</a> }</div>
+            @if (!Model.Approvals.Any()) { <div class="panel-body small-muted">Келісуші тағайындалмаған.</div> }
+            else { <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Кезек</th><th>Келісуші</th><th>Мәртебе</th><th>Күні</th><th>Пікір</th></tr></thead><tbody>@foreach (var approval in Model.Approvals.OrderBy(x => x.ApprovalOrder)) { <tr><td>@approval.ApprovalOrder</td><td>@approval.Approver?.FullName</td><td><span class="status-badge @(approval.DecisionAt is null ? "is-pending" : approval.ApprovalStatus.Contains("Келіс") ? "is-complete" : "is-danger")">@approval.ApprovalStatus</span></td><td>@(approval.DecisionAt?.ToString("dd.MM.yyyy") ?? "Күтуде")</td><td>@(approval.Comment ?? "—")</td></tr> }</tbody></table></div> }
+        </section>
+        <section class="panel" id="doc-files"><div class="panel-head"><div><h3>Файлдар</h3><p>Құжатқа тіркелген файлдар</p></div></div><div class="panel-body">
+            @if (Model.Attachments.Any()) { <div class="task-list mb-3">@foreach (var file in Model.Attachments.OrderByDescending(x => x.UploadedAt)) { <div class="task-item"><span class="task-check">↧</span><span><strong><a asp-controller="Attachments" asp-action="Download" asp-route-id="@file.AttachmentId">@file.FileName</a></strong><small>@(file.FileSize is long fileSize ? (fileSize / 1024d).ToString("N0") + " KB" : "Өлшемі белгісіз") · @file.UploadedBy?.FullName · @file.UploadedAt.ToString("dd.MM.yyyy HH:mm")</small></span></div> }</div> }
+            else { <p class="small-muted">Тіркелген файл жоқ.</p> }
+            @if (canComment) { <form asp-controller="Attachments" asp-action="Upload" method="post" enctype="multipart/form-data" class="d-flex gap-2 align-items-end flex-wrap"><input type="hidden" name="documentId" value="@Model.DocumentId"/><div><label class="form-label" for="upload">PDF, DOCX, XLSX, PNG немесе JPG · 20 MB дейін</label><input class="form-control" type="file" id="upload" name="file" accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg" required /></div><button class="btn btn-primary" type="submit">Файл жүктеу</button></form> }
+        </div></section>
+        <section class="panel" id="doc-comments"><div class="panel-head"><div><h3>Пікірлер</h3><p>Құжат бойынша жазбалар мен хабарлар</p></div></div><div class="panel-body">
+            @if (Model.Comments.Any()) { <div class="task-list mb-3">@foreach (var comment in Model.Comments.OrderByDescending(x => x.CreatedAt)) { <div class="task-item align-items-start"><span class="avatar">@comment.User?.FirstName.FirstOrDefault()</span><span><strong>@comment.User?.FullName <small class="d-inline">· @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm") @(comment.IsEdited ? "· өңделген" : "")</small></strong><small class="text-body">@comment.CommentText</small>@if (comment.UserId == User.UserId()) { <form asp-controller="Comments" asp-action="Edit" method="post" class="d-flex gap-2 mt-2"><input type="hidden" name="commentId" value="@comment.CommentId"/><input class="form-control" name="commentText" value="@comment.CommentText" maxlength="1500"/><button class="btn btn-sm btn-outline-primary" type="submit">Өңдеу</button></form> }</span></div> }</div> }
+            else { <p class="small-muted">Пікір әлі жазылмаған.</p> }
+            @if (canComment) { <form asp-controller="Comments" asp-action="Create" method="post"><input type="hidden" name="documentId" value="@Model.DocumentId"/><label class="form-label" for="commentText">Жаңа пікір</label><textarea class="form-control" name="commentText" id="commentText" maxlength="1500" required placeholder="Пікіріңізді жазыңыз..."></textarea><div class="d-flex justify-content-end mt-2"><button class="btn btn-primary" type="submit">Пікір қосу</button></div></form> }
+        </div></section>
+    </div>
+    <aside class="panel" id="doc-history"><div class="panel-head"><div><h3>Құжат тарихы</h3><p>Құжаттағы соңғы әрекеттер</p></div></div><div class="panel-body"><div class="timeline">
+        @foreach (var item in Model.History.OrderByDescending(x => x.ActionDate)) { <div class="timeline-item"><strong>@item.ActionType.Replace('_', ' ')</strong><p>@item.Description</p><time>@item.User?.FullName · @item.ActionDate.ToString("dd.MM.yyyy HH:mm")</time></div> }
+        @if (!Model.History.Any()) { <div class="empty-state"><strong>Әзірге тарих жоқ</strong><p>Әрекеттер мұнда тіркеледі.</p></div> }
+    </div></div></aside>
+</div>

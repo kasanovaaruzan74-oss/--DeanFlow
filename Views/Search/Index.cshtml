@@ -1,0 +1,12 @@
+@model IReadOnlyList<DeanDocument>
+@{
+    ViewData["Title"] = "Іздеу нәтижелері";
+    var query = (string?)ViewBag.Query;
+}
+<div class="page-toolbar"><div><h2>Құжат іздеу</h2><p>Сізге қолжетімді құжаттардан тіркеу №, атауы, жіберуші не алушы бойынша іздеу.</p></div></div>
+<form asp-action="Index" method="get" class="filter-panel"><div class="d-flex gap-2"><input class="form-control" name="q" value="@query" placeholder="Мысалы, REQ-2026-0001 немесе өтініш атауы" /><button type="submit" class="btn btn-primary">Іздеу</button></div></form>
+<section class="table-panel">
+    @if (string.IsNullOrWhiteSpace(query) || query.Length < 2) { <div class="empty-state"><div class="empty-icon">⌕</div><strong>Іздеу сөзін енгізіңіз</strong><p>Кемінде екі таңба енгізіңіз.</p></div> }
+    else if (Model.Count == 0) { <div class="empty-state"><div class="empty-icon">⌕</div><strong>«@query» бойынша нәтиже жоқ</strong><p>Сөзді немесе тіркеу нөмірін өзгертіп көріңіз.</p></div> }
+    else { <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Тіркеу №</th><th>Құжат</th><th>Түрі</th><th>Бөлім</th><th>Мәртебе</th><th>Күні</th></tr></thead><tbody>@foreach (var doc in Model) { <tr><td><a asp-controller="Documents" asp-action="Details" asp-route-id="@doc.DocumentId" class="doc-number">@doc.RegistrationNumber</a></td><td><div class="doc-title">@doc.Title<small>@doc.SenderName → @doc.RecipientName</small></div></td><td>@doc.DocumentType?.TypeName</td><td>@(doc.Department?.ShortName ?? "—")</td><td>@doc.Status?.StatusName</td><td>@doc.RegisteredAt.ToString("dd.MM.yyyy")</td></tr> }</tbody></table></div><div class="table-foot"><span>Ең көбі 50 нәтиже көрсетілді</span><span>Қолжетімділігіңіз тексерілді</span></div> }
+</section>
